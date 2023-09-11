@@ -2,14 +2,14 @@ from logic import *
 import matplotlib.pyplot as plt
 
 coords = {}
-f = open("coords.txt", "r", encoding="utf8")
+f = open("data/coords.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split('\n'):
   l = s.split(' ')
   coords[int(l[0])] = (int(l[1]), int(l[2]))
 
-im = plt.imread('map.jpg')
+im = plt.imread('data/map.jpg')
 plt.ion()
 
 def drawMap(state):
@@ -28,7 +28,7 @@ def drawMap(state):
     X.append(coords[p][0])
     Y.append(coords[p][1])
   plt.plot(X, Y, 'D', ms=9, color='none', mec='cyan')
-  plt.plot(coords[state[2]][0], coords[state[2]][1], '*', ms=9, color='none', mec='violet')
+  plt.plot(coords[state[2]][0], coords[state[2]][1], '*', ms=10, color='none', mec='gold')
   plt.show()
 
 turn = 0

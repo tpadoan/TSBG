@@ -1,7 +1,7 @@
 maxTurns = 10
 reveals = [3,6,10]
 
-f = open("matrix.txt", "r", encoding="utf8")
+f = open("data/matrix.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 A = []
@@ -11,7 +11,7 @@ for r in rows:
   A.append([int(c) for c in r if c != ' '])
 
 taxi = {(i+1):set() for i in range(size)}
-f = open("taxi.txt", "r", encoding="utf8")
+f = open("data/taxi.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split('\n'):
@@ -19,7 +19,7 @@ for s in content.split('\n'):
   taxi[int(l[0])] = {int(p) for p in l[1:]}
 
 bus = {(i+1):set() for i in range(size)}
-f = open("bus.txt", "r", encoding="utf8")
+f = open("data/bus.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split('\n'):
@@ -27,7 +27,7 @@ for s in content.split('\n'):
   bus[int(l[0])] = {int(p) for p in l[1:]}
 
 ug = {(i+1):set() for i in range(size)}
-f = open("ug.txt", "r", encoding="utf8")
+f = open("data/ug.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split('\n'):
