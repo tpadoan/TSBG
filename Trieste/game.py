@@ -44,7 +44,11 @@ for i in range(n):
   else:
     print('input error')
     quit()
-state = [{i+1 for i in range(size)}.difference(police), police, mrX]
+
+# unknown initial location:
+# state = [{i+1 for i in range(size)}.difference(police), police, mrX]
+# known initial location:
+state = [{mrX}.difference(police), police, mrX]
 
 while turn < maxTurns and not found(state):
   turn += 1
