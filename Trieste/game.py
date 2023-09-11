@@ -2,6 +2,7 @@ from logic import *
 import matplotlib.pyplot as plt
 
 coords = {}
+# this must point to the list (as txt) of coordinates of locations in the new map
 f = open("data/coords.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
@@ -9,6 +10,7 @@ for s in content.split('\n'):
   l = s.split(' ')
   coords[int(l[0])] = (int(l[1]), int(l[2]))
 
+# this must point to the new map
 im = plt.imread('data/map.jpg')
 plt.ion()
 
