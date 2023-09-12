@@ -1,8 +1,3 @@
-# maximum number of turns to catch mr.X
-maxTurns = 10
-# list of the turns when mr.X location is revealed to everyone, possibly empty
-reveals = []
-
 # this, and the following files, must point to the new adjacency matrix, taxi, bus and ug arcs, correspondingly
 f = open("data/matrix.txt", "r", encoding="utf8")
 content = f.read()

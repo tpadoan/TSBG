@@ -1,7 +1,13 @@
 from logic import *
 import matplotlib.pyplot as plt
 
+# maximum number of turns to catch mr.X
+maxTurns = 10
+# list of the turns when mr.X location is revealed to everyone, possibly empty
+reveals = []
+
 coords = {}
+# this must point to the list (as txt) of coordinates of locations in the new map
 f = open("data/coords.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
@@ -9,6 +15,7 @@ for s in content.split('\n'):
   l = s.split(' ')
   coords[int(l[0])] = (int(l[1]), int(l[2]))
 
+# this must point to the new map
 im = plt.imread('data/map.jpg')
 plt.ion()
 
@@ -42,7 +49,11 @@ for i in range(n):
   else:
     print('input error')
     quit()
-state = [{i+1 for i in range(size)}.difference(police), police, mrX]
+
+# unknown initial location:
+# state = [{i+1 for i in range(size)}.difference(police), police, mrX]
+# known initial location:
+state = [{mrX}.difference(police), police, mrX]
 
 while turn < maxTurns and not found(state):
   turn += 1
