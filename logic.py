@@ -1,67 +1,64 @@
-# this, and the following files, must point to the new adjacency matrix, taxi, bus and ug arcs, correspondingly
-f = open("data/matrix.txt", "r", encoding="utf8")
-content = f.read()
-f.close()
-A = []
-rows = content.split('\n')
-size = len(rows)
-for r in rows:
-  A.append([int(c) for c in r if c != ' '])
+# f = open("data/matrix.txt", "r", encoding="utf8")
+# content = f.read()
+# f.close()
+# A = []
+# rows = content.split('\n')
+# size = len(rows)
+# for r in rows:
+#   A.append([int(c) for c in r if c != ' '])
+size = 21
 
-taxi = {(i+1):set() for i in range(size)}
-f = open("data/taxi.txt", "r", encoding="utf8")
-content = f.read()
-f.close()
-for s in content.split('\n'):
-  l = s.split(' ')
-  taxi[int(l[0])] = {int(p) for p in l[1:]}
-
-bus = {(i+1):set() for i in range(size)}
-f = open("data/bus.txt", "r", encoding="utf8")
+cart = {(i+1):set() for i in range(size)}
+f = open("data/cart.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split('\n'):
   l = s.split(' ')
-  bus[int(l[0])] = {int(p) for p in l[1:]}
+  cart[int(l[0])] = {int(p) for p in l[1:]}
 
-ug = {(i+1):set() for i in range(size)}
-f = open("data/ug.txt", "r", encoding="utf8")
+tram = {(i+1):set() for i in range(size)}
+f = open("data/tram.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split('\n'):
   l = s.split(' ')
-  ug[int(l[0])] = {int(p) for p in l[1:]}
+  tram[int(l[0])] = {int(p) for p in l[1:]}
 
-E = {(i+1):((taxi[i+1].union(bus[i+1])).union(ug[i+1])) for i in range(size)}
+boat = {(i+1):set() for i in range(size)}
+f = open("data/boat.txt", "r", encoding="utf8")
+content = f.read()
+f.close()
+for s in content.split('\n'):
+  l = s.split(' ')
+  boat[int(l[0])] = {int(p) for p in l[1:]}
 
-# the strings/moves in this function must be properly renamed
+E = {(i+1):((cart[i+1].union(tram[i+1])).union(boat[i+1])) for i in range(size)}
+
 def moves(place):
-  m = ['taxi']
-  if bus[place]:
-    m.append('bus')
-  if ug[place]:
-    m.append('ug')
+  m = ['cart']
+  if tram[place]:
+    m.append('tram')
+  if boat[place]:
+    m.append('boat')
   return m
 
-# the strings/moves in this function must be properly renamed
 def restrictedMoves(state):
   m = []
-  if taxi[state[2]].difference(state[1]):
-    m.append('taxi')
-  if bus[state[2]].difference(state[1]):
-    m.append('bus')
-  if ug[state[2]].difference(state[1]):
-    m.append('ug')
+  if cart[state[2]].difference(state[1]):
+    m.append('cart')
+  if tram[state[2]].difference(state[1]):
+    m.append('tram')
+  if boat[state[2]].difference(state[1]):
+    m.append('boat')
   return m
 
-# the strings/moves in this function must be properly renamed
 def dest(place, move):
-  if move == 'taxi':
-    return taxi[place]
-  if move == 'bus':
-    return bus[place]
-  if move == 'ug':
-    return ug[place]
+  if move == 'cart':
+    return cart[place]
+  if move == 'tram':
+    return tram[place]
+  if move == 'boat':
+    return boat[place]
 
 def propagate(source, move):
   target = set()
