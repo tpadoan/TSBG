@@ -6,8 +6,8 @@ maxTurns = 10
 # list of the turns when mr.X location is revealed to everyone, possibly empty
 reveals = []
 
-coords = {}
 # this must point to the list (as txt) of coordinates of locations in the new map
+coords = {}
 f = open("data/coords.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
@@ -16,7 +16,7 @@ for s in content.split('\n'):
   coords[int(l[0])] = (int(l[1]), int(l[2]))
 
 # this must point to the new map
-im = plt.imread('data/map.jpg')
+im = plt.imread('data/graph.png')
 plt.ion()
 
 def drawMap(state):
@@ -35,10 +35,12 @@ def drawMap(state):
     X.append(coords[p][0])
     Y.append(coords[p][1])
   plt.plot(X, Y, 'D', ms=9, color='none', mec='cyan')
-  plt.plot(coords[state[2]][0], coords[state[2]][1], '*', ms=10, color='none', mec='gold')
+  if state[2]:
+    plt.plot(coords[state[2]][0], coords[state[2]][1], '*', ms=10, color='none', mec='gold')
   plt.show()
 
 turn = 0
+drawMap([[],[],0])
 mrX = int((input('Mr.X initial location:\t')).strip())
 police = []
 n = int(input('Number of detectives:\t').strip())
@@ -53,7 +55,8 @@ for i in range(n):
 # unknown initial location:
 # state = [{i+1 for i in range(size)}.difference(police), police, mrX]
 # known initial location:
-state = [{mrX}.difference(police), police, mrX]
+state = [{mrX}, police, mrX]
+drawMap(state)
 
 while turn < maxTurns and not found(state):
   turn += 1
