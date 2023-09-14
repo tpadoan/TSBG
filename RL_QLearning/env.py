@@ -227,3 +227,6 @@ class ScotlandYardEnv:
             self.step()
             if not self.completed:
                 self.skip_turn()
+
+    def shortest_path(self, node_id):
+        return nx.dijkstra_path_length(self.G, self.detectives[node_id][0], self.mrX[0], weight='weight')
