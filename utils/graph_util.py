@@ -9,7 +9,7 @@ def generate_graph() -> nx.Graph:
     """
     # Specify each node coordinate
     G = nx.MultiGraph()
-    with open('data(coords).txt', 'r') as f:
+    with open('data/coords.txt', 'r') as f:
         for line in f:
             parts = line.strip().split()
             node_id, x_coord, y_coord = map(int, parts)
@@ -20,13 +20,15 @@ def generate_graph() -> nx.Graph:
     cart = nx.read_adjlist("data/cart.txt", create_using=nx.MultiGraph(), nodetype=int)
     tram = nx.read_adjlist("data/tram.txt", create_using=nx.MultiGraph(), nodetype=int)
 
+    distance = lambda a, b: ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
     # Add each edge to the final graph
     for edge in boat.edges():
-        G.add_edge(*edge, type='boat')
+        G.add_edge(*edge, weight=distance(G.nodes[edge[0]]['pos'], G.nodes[edge[1]]['pos']),type='boat')
     for edge in cart.edges():
-        G.add_edge(*edge, type='cart')
+        G.add_edge(*edge, weight=distance(G.nodes[edge[0]]['pos'], G.nodes[edge[1]]['pos']), type='cart')
     for edge in tram.edges():
-        G.add_edge(*edge, type='tram')
+        G.add_edge(*edge, weight=distance(G.nodes[edge[0]]['pos'], G.nodes[edge[1]]['pos']), type='tram')
 
     return G
 
