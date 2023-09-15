@@ -37,7 +37,6 @@ class ScotlandYardEnv:
         self.detective_can_move = [True] * num_detectives
 
         ### Metadata utilites
-        self.detectives_location_log = np.array([self.mrX_locations] * 5)  # Might be useless
         self.last_move_by_which_player = 0
         self.num_detectives = num_detectives
         self.max_turns = num_max_turns

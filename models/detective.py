@@ -4,7 +4,7 @@ import torch.optim as optim
 
 class DetectiveModel(nn.Module):
 
-    def __init__(self):
+    def __init__(self, device: str = 'cpu'):
         super(DetectiveModel, self).__init__()
         self.learning_rate = 1e-3
         self.columns = 126
@@ -40,6 +40,7 @@ class DetectiveModel(nn.Module):
         
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
+        self.device = device
         
     def forward(self, x):
         x = self.relu(self.fc1(x))
@@ -49,8 +50,8 @@ class DetectiveModel(nn.Module):
         return x
 
     def optimize(self, x, y):
-        x = torch.tensor(x, dtype=torch.float32)
-        y = torch.tensor(y, dtype=torch.float32)
+        x = torch.tensor(x, dtype=torch.float32, device=self.device)
+        y = torch.tensor(y, dtype=torch.float32, device=self.device)
         predictions = self(x)
         loss = self.loss_function(predictions, y)
         self.optimizer.zero_grad()
@@ -58,7 +59,7 @@ class DetectiveModel(nn.Module):
         self.optimizer.step()
 
     def predict(self, x):
-        x_tensor = torch.tensor(x, dtype=torch.float32)
+        x_tensor = torch.tensor(x, dtype=torch.float32, device=self.device)
         with torch.no_grad():
             output = self(x_tensor)
         return output.numpy()
