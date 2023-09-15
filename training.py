@@ -5,8 +5,8 @@ from models.detective import DetectiveModel
 
 def train_agent():
     mrX_model = MrXModel()
-    detectives_model = [DetectiveModel() for _ in range(5)]
-    epsilon = np.linspace(1, 0, num=20)
+    detectives_model = [DetectiveModel() for _ in range(3)]
+    epsilon = np.linspace(1, 0, num=100)
 
     start = 0
     countD = 0
