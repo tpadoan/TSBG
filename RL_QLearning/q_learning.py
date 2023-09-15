@@ -24,7 +24,7 @@ class QLearning:
 
     def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], explore: float = 0.0):
         # Environment 
-        self.env = env.ScotlandYardEnv(num_detectives = len(model_detectives), num_max_turns=3)
+        self.env = env.ScotlandYardEnv(num_detectives = len(model_detectives), num_max_turns=5)
         self.explore = explore
         self.reward = 0
 

@@ -7,7 +7,7 @@ class MrXModel(nn.Module):
     def __init__(self):
         super(MrXModel, self).__init__()
         self.learning_rate = 1e-3
-        self.columns = 151
+        self.columns = 109
 
         self.hidden1 = int(self.columns / 2)
         # self.hidden2 = int(self.columns / 2)

@@ -7,7 +7,7 @@ class DetectiveModel(nn.Module):
     def __init__(self):
         super(DetectiveModel, self).__init__()
         self.learning_rate = 1e-3
-        self.columns = 164
+        self.columns = 126
 
         self.hidden1 = int(self.columns / 2)
         self.hidden2 = int(self.columns / 2)
