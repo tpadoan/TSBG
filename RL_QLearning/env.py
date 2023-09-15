@@ -24,7 +24,7 @@ class ScotlandYardEnv:
     """
     def __init__(self, num_detectives: int = 2, num_max_turns: int = 10):
         self.G = None
-        self.detectives = np.array([[0]*num_detectives])
+        self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([])
         self.mrX_locations = np.array([0]*num_max_turns)
         self.mrX_transport_log = np.array([[0,0,0]]*num_max_turns)
@@ -48,12 +48,12 @@ class ScotlandYardEnv:
         # Initialize the game graph
         self.G = utils.graph_util.generate_graph()
         # Initialize the starting nodes
-        num_players = 1 + len(self.detectives)
-        self.starting_nodes = np.random.choice(np.array(range(1,26)), size=num_players, replace=False)
+        num_players = 1 + self.detectives.shape[0]
+        self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=num_players, replace=False)
         # Initialize mrX starting node
-        self.mrX = self.starting_nodes[0]
+        self.mrX = np.array([self.starting_nodes[0]])
         # Initialize the detectives' starting nodes
-        for i in range(len(self.detectives)):
+        for i in range(self.detectives.shape[0]):
             self.detectives[i] = self.starting_nodes[i+1]
 
     def observe(self) -> tuple[np.ndarray[int], int]:
@@ -104,9 +104,9 @@ class ScotlandYardEnv:
         # Add each detective current position
         for i in range(len(self.detectives)):
             observation.extend(utils.graph_util.node_one_hot_encoding(node_id = self.detectives[i][0], num_nodes = self.G.number_of_nodes()))
-        # Add the log of the transports used by mrX till the current turn
-        for i in range(self.turn_number):
-            observation.extend(self.mrX_transport_log[i].tolist())
+        # Add the log of the transports used by mrX in the whole game
+        for transport_log in self.mrX_transport_log:
+            observation.extend(transport_log.tolist())
 
         return np.array(observation)
 
@@ -130,7 +130,7 @@ class ScotlandYardEnv:
         if self.last_move_by_which_player == 0:
             return utils.mrX_util.valid_moves_list(self.G, self.mrX)
         else:
-            return utils.detective_util.valid_moves_list(self.detectives, self.G, self.last_move_by_which_player - 1)
+            return utils.detective_util.valid_moves_list(self.G, self.detectives, self.last_move_by_which_player - 1)
 
     def take_action(self, next_node: int, transport_one_hot: np.ndarray[int]):
         if self.completed:
@@ -167,9 +167,9 @@ class ScotlandYardEnv:
         # Update mrX position
         self.mrX[0] = next_node
         # Register the new position in the locations log
-        self.mrX_locations[self.turn_number] = next_node
+        self.mrX_locations[self.turn_number-1] = next_node
         # Register the used transport in the transport log
-        self.mrX_transport_log[self.turn_number] = transport_one_hot
+        self.mrX_transport_log[self.turn_number-1] = transport_one_hot
     
     def play_detective(self, next_node: int):
         """ Make a detective play.

@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-class Model(nn.Module):
+class MrXModel(nn.Module):
 
     def __init__(self):
-        super(Model, self).__init__()
+        super(MrXModel, self).__init__()
         self.learning_rate = 1e-3
-        self.columns = 1415
+        self.columns = 151
 
         self.hidden1 = int(self.columns / 2)
         # self.hidden2 = int(self.columns / 2)
@@ -36,6 +36,12 @@ class Model(nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def predict(self, x):
+        x_tensor = torch.tensor(x, dtype=torch.float32)
+        with torch.no_grad():
+            output = self(x_tensor)
+        return output.numpy()
 
     def save(self, episode):
         # Saving the model state dictionary to a file
