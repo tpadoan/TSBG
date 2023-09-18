@@ -1,12 +1,10 @@
 import numpy as np
-import torch 
-
+import torch
 from RL_QLearning.q_learning import QLearning
 from models.mrX import MrXModel
 from models.detective import DetectiveModel
 
 def test_agent():
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Selected device is: {device}")
 
@@ -15,7 +13,7 @@ def test_agent():
     mrX_model = MrXModel(device).to(device)
     mrX_model.restore(episode=num_episodes)
     mrX_model.eval()
-    detectives_model = [DetectiveModel(device).to(device) for _ in range(3)]
+    detectives_model = [DetectiveModel(device).to(device) for _ in range(2)]
     for i in range(len(detectives_model)):
         detectives_model[i].restore(episode=num_episodes+i)
         detectives_model[i].eval()
@@ -27,8 +25,9 @@ def test_agent():
     str1 = ""
     print("Testing")
     print("Run\tD_wins\tX_wins\n")
-    for _ in range(len(epsilon)):
-        rl_setting = QLearning(mrX_model, detectives_model, explore = 0.)
+    for i in range(len(epsilon)):
+        print(f"EPISODE {i}")
+        rl_setting = QLearning(mrX_model, detectives_model, explore=0., interact=True)
         reward, mrX_model, detectives_model = rl_setting.run_episode()
         if reward < 0:
             countX+=1

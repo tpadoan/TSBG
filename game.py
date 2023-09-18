@@ -1,12 +1,15 @@
-from logic import *
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from models.detective import DetectiveModel
 
+# size of graph
+sizeGraph = 21
+# list of names of moves, same order as in graph utils
+movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
-# list of the turns when mr.X location is revealed to everyone, possibly empty
-reveals = []
 
-# this must point to the list (as txt) of coordinates of locations in the new map
 coords = {}
 f = open("data/coords.txt", "r", encoding="utf8")
 content = f.read()
@@ -15,80 +18,106 @@ for s in content.split('\n'):
   l = s.split(' ')
   coords[int(l[0])] = (int(l[1]), int(l[2]))
 
-# this must point to the new map
 im = plt.imread('data/graph.png')
 plt.ion()
 
 def drawMap(state):
+  plt.clf()
+  plt.imshow(im)
+  plt.axis('off')
   X = []
   Y = []
   for p in state[0]:
     X.append(coords[p][0])
     Y.append(coords[p][1])
-  plt.clf()
-  plt.imshow(im)
-  plt.axis('off')
-  plt.plot(X, Y, 'o', ms=11, color='none', mec='magenta')
-  X = []
-  Y = []
-  for p in state[1]:
-    X.append(coords[p][0])
-    Y.append(coords[p][1])
   plt.plot(X, Y, 'D', ms=9, color='none', mec='cyan')
-  if state[2]:
-    plt.plot(coords[state[2]][0], coords[state[2]][1], '*', ms=10, color='none', mec='gold')
+  if state[1]:
+    plt.plot(coords[state[1]][0], coords[state[1]][1], '*', ms=10, color='none', mec='gold')
   plt.show()
 
-turn = 0
-drawMap([[],[],0])
-mrX = int((input('Mr.X initial location:\t')).strip())
-police = []
-n = int(input('Number of detectives:\t').strip())
-for i in range(n):
-  p = int(input('Detective ' + str(i+1) + ' initial location:\t').strip())
-  if 0 < p <= size:
-    police.append(p)
-  else:
-    print('input error')
-    quit()
+boat = {(i+1):set() for i in range(sizeGraph)}
+f = open("data/boat.txt", "r", encoding="utf8")
+content = f.read()
+f.close()
+for s in content.split('\n'):
+  l = s.split(' ')
+  boat[int(l[0])] = [int(p) for p in l[1:]]
 
-# unknown initial location:
-# state = [{i+1 for i in range(size)}.difference(police), police, mrX]
-# known initial location:
-state = [{mrX}, police, mrX]
+tram = {(i+1):set() for i in range(sizeGraph)}
+f = open("data/tram.txt", "r", encoding="utf8")
+content = f.read()
+f.close()
+for s in content.split('\n'):
+  l = s.split(' ')
+  tram[int(l[0])] = [int(p) for p in l[1:]]
+
+cart = {(i+1):set() for i in range(sizeGraph)}
+f = open("data/cart.txt", "r", encoding="utf8")
+content = f.read()
+f.close()
+for s in content.split('\n'):
+  l = s.split(' ')
+  cart[int(l[0])] = [int(p) for p in l[1:]]
+
+def node_ohe(node):
+  return [1 if i == node-1 else 0 for i in range(sizeGraph)]
+
+def transport_ohe(move):
+  return [1 if move == t else 0 for t in movesNames]
+
+def getMoves(source):
+  return [(c, 'cart') for c in cart[source]] + [(t, 'tram') for t in tram[source]] + [(b, 'boat') for b in boat[source]]
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+turn = 0
+numDetectives = 2
+police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
+drawMap([police,0,0])
+detectives_model = [DetectiveModel(device).to(device) for _ in range(numDetectives)]
+for i in range(numDetectives):
+  detectives_model[i].restore(episode=20000+i)
+  detectives_model[i].eval()
+mrX = int((input('Mr.X initial location:\t')).strip())
+tlog = [[0,0,0]]*maxTurns
+state = [police, mrX, tlog]
 drawMap(state)
 
-while turn < maxTurns and not found(state):
+found = False
+while turn < maxTurns and not found:
+  for i in range(numDetectives):
+    observation = node_ohe(state[1]) + [1 if j==i else 0 for j in range(numDetectives)]
+    for j in range(numDetectives):
+      observation.extend(node_ohe(state[0][j]))
+    for t in state[2]:
+      observation.extend(t)
+    actions = getMoves(state[0][i])
+    obs = [[] for _ in range(len(actions))]
+    for j in range(len(actions)):
+      obs[j] = observation + node_ohe(actions[j][0]) + transport_ohe(actions[j][1])
+    state[0][i] = actions[np.argmax(detectives_model[i].predict(obs))][0]
+  drawMap(state)
+  if input('Type anything if found..\t').strip():
+    found = True
+  move = input('Mr.X moves by:\t').strip()
+  while move not in movesNames:
+    move = input('input error, try again:\t').strip()
+  state[1] = 0
+  state[2][turn] = transport_ohe(move)
   turn += 1
   print('\nTURN ' + str(turn))
+  # mrX = int(input('secretly to location:\t').strip())
+  # if mrX<1 or mrX>sizeGraph or mrX not in dest(state[2], move):
+    # print('input error')
+    # quit()
+  # state[2] = mrX
+  # if turn in reveals:
+    # print('Mr.X location has been revealed')
+    # state[0] = {state[2]}
+  # else:
+    # state[0] = propagate(state, move)
+  # drawMap(state)
 
-  move = input('Mr.X moves by:\t').strip()
-  if move not in moves(state[2]):
-    print('input error')
-    quit()
-  mrX = int(input('secretly to location:\t').strip())
-  if mrX<1 or mrX>size or mrX not in dest(state[2], move):
-    print('input error')
-    quit()
-  state[2] = mrX
-  if turn in reveals:
-    print('Mr.X location has been revealed')
-    state[0] = {state[2]}
-  else:
-    state[0] = propagate(state, move)
-  drawMap(state)
-
-  if not found(state):
-    for i in range(n):
-      p = int(input('Detective ' + str(i+1) + ' moves to:\t').strip())
-      if p<1 or p>size or p not in E[state[1][i]] or p in state[1][0:i]:
-        print('input error')
-        quit()
-      state[1][i] = p
-    state[0] = state[0].difference(state[1])
-    drawMap(state)
-
-if found(state):
+if found:
   print('Game ended, the detectives apprehended Mr.X!')
 else:
   print('Game ended, Mr.X has escaped!')

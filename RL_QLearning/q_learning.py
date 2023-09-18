@@ -1,7 +1,5 @@
 import torch.nn as nn
 import numpy as np
-import random
-
 import RL_QLearning.env as env
 from models.detective import DetectiveModel
 from models.mrX import MrXModel
@@ -22,9 +20,9 @@ class QLearning:
         length (List[float]): Distance at the end of the game of each detective w.r.t mrX.
     """
 
-    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], explore: float = 0.0):
+    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], explore: float = 0.0, interact: bool = False):
         # Environment 
-        self.env = env.ScotlandYardEnv(num_detectives = len(model_detectives), num_max_turns=5)
+        self.env = env.ScotlandYardEnv(num_detectives=len(model_detectives), num_max_turns=10, interactive=interact)
         self.explore = explore
         self.reward = 0
 
@@ -49,7 +47,7 @@ class QLearning:
             current_observation, sub_turn_counter = self.env.observe()
             actions = self.env.get_valid_moves()
             # Switch allows to use an heuristic to decide the next position for mrX
-            switch = False
+            # switch = False
             if sub_turn_counter != 0:
                 best_action, _ = self.get_best_action(current_observation, actions, self.model_detectives[sub_turn_counter-1])
             else:
@@ -85,7 +83,7 @@ class QLearning:
             # If there are no available actions then we stay in the node
             if actions.shape[0] == 0:
                 actions = np.array([[next_node, next_node, 0, 0, 0]])
-            
+
             # Update the observation and Q value lists based on the player
             if sub_turn_counter == 0:
                 _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
@@ -115,7 +113,7 @@ class QLearning:
                 reward = self.reward
                 for j in range(num_of_observations):
                     multiplier = num_of_observations - j
-                    self.detective_y[i][j][0] += gamma * multiplier * reward
+                    self.detective_y[i][j][0] += gamma * reward  * multiplier
                 self.model_detectives[i-1].optimize(self.detective_obs[i], self.detective_y[i])
 
     def get_best_action(self, current_state: np.ndarray[int], actions: np.ndarray[int], model: nn.Module) -> tuple[int, float]:
