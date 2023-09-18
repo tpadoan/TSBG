@@ -1,8 +1,7 @@
 import numpy as np
 import networkx as nx
-
 import utils.graph_util, utils.detective_util, utils.mrX_util
-
+import matplotlib.pyplot as plt
 
 class ScotlandYardEnv:
     """ 
@@ -22,10 +21,11 @@ class ScotlandYardEnv:
         mrX_can_move (bool): Boolean to tell whether mrX can move or not.
         detective_can_move (List[bool]): Boolean to tell whether each detective can move or not.
     """
-    def __init__(self, num_detectives: int = 2, num_max_turns: int = 10):
+    def __init__(self, num_detectives: int = 2, num_max_turns: int = 10, interactive: bool = False):
         self.G = None
         self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([])
+        self.state = [[0 for _ in range(num_detectives)], 0, {0}]
         self.mrX_locations = np.array([0]*num_max_turns)
         self.mrX_transport_log = np.array([[0,0,0]]*num_max_turns)
         self.starting_nodes = None
@@ -35,11 +35,15 @@ class ScotlandYardEnv:
         self.reward = 0
         self.mrX_can_move = True
         self.detective_can_move = [True] * num_detectives
+        self.interactive = interactive
 
         ### Metadata utilites
         self.last_move_by_which_player = 0
         self.num_detectives = num_detectives
         self.max_turns = num_max_turns
+
+        self.img = plt.imread('data/graph.png')
+        plt.ion()
 
     def initialize_game(self):
         """ Initialize the game by generating the game graph and choosing (randomly) the starting nodes for each player.
@@ -51,9 +55,16 @@ class ScotlandYardEnv:
         self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=num_players, replace=False)
         # Initialize mrX starting node
         self.mrX = np.array([self.starting_nodes[0]])
+        self.state[1] = self.mrX[0]
+        self.state[2] = {self.mrX[0]}
         # Initialize the detectives' starting nodes
         for i in range(self.detectives.shape[0]):
             self.detectives[i] = self.starting_nodes[i+1]
+            self.state[0][i] = self.starting_nodes[i+1]
+        if self.interactive:
+            self.drawMap()
+            if input("Begin?\t") == 'n':
+                quit()
 
     def observe(self) -> tuple[np.ndarray[int], int]:
         """ Observe the environment based on which player is playing.
@@ -71,7 +82,7 @@ class ScotlandYardEnv:
         return (current_state, self.turn_sub_counter)
 
     def observe_as_mrX(self) -> np.ndarray[int]:
-        """ The observation from mrX point ov view is made of its position, the detectives ones and the turn number.
+        """ The observation from mrX point of view is made of its position, the detectives ones and the turn number.
 
         Returns:
             np.ndarray[int]: The current observation of mrX.
@@ -92,12 +103,8 @@ class ScotlandYardEnv:
         Returns:
             np.ndarray[int]: The current observation of the detectives.
         """
-        observation = []
-        # In the first turn, reveal mrX position
-        if self.turn_number == 0:
-            observation += utils.graph_util.node_one_hot_encoding(self.mrX[0], self.G.number_of_nodes())
-        else:
-            observation += utils.graph_util.node_one_hot_encoding(-1, self.G.number_of_nodes())
+        # Possible positions of mr.X taking into account the moves and the starting position
+        observation = utils.graph_util.nodes_ohe(self.state[2], self.G.number_of_nodes())
         # Inform which detective is playing
         observation += [1 if i == self.turn_sub_counter-1 else 0 for i in range(len(self.detectives))]
         # Add each detective current position
@@ -108,6 +115,12 @@ class ScotlandYardEnv:
             observation.extend(transport_log.tolist())
 
         return np.array(observation)
+
+    def propagate(self, move: str):
+        target = set()
+        for s in self.state[2]:
+            target = target.union(utils.graph_util.destinations_by(self.G, s, move))
+        self.state[2] = target.difference(self.state[0])
 
     def get_valid_moves(self) -> np.ndarray[int]:
         """ Array of valid moves to play.
@@ -163,8 +176,15 @@ class ScotlandYardEnv:
             next_node (int): New reached node.
             transport_one_hot (np.ndarray[int]): One-hot encoding of the transport used by mrX to reach the new node.
         """
-        # Update mrX position
+        # Update mrX position and state
         self.mrX[0] = next_node
+        self.state[1] = next_node
+        if transport_one_hot[0]:
+            self.propagate('boat')
+        elif transport_one_hot[1]:
+            self.propagate('tram')
+        else:
+            self.propagate('cart')
         # Register the new position in the locations log
         self.mrX_locations[self.turn_number-1] = next_node
         # Register the used transport in the transport log
@@ -179,17 +199,23 @@ class ScotlandYardEnv:
         """
         # Simply update the position of the detective
         self.detectives[self.turn_sub_counter-1] = next_node
+        self.state[0][self.turn_sub_counter-1] = next_node
 
     def step(self):
         """ Make a step in the environment and check whether the game is finished or not
         """
+        if self.interactive:
+            self.drawMap()
+            if input(f"sub_turn {self.turn_sub_counter} done, continue?\t") == 'n':
+                quit()
+        
         # Check that mrX can still move
         if utils.mrX_util.valid_moves_list(self.G, self.mrX).size == 0:
             self.mrX_can_move = False
         else:
             self.mrX_can_move = True
 
-        # Check that all detectives can still move
+        # Check that any detectives can still move
         self.detective_can_move = [utils.detective_util.valid_moves_list(self.G, self.detectives, i).size != 0 for i in range(len(self.detectives))]
         all_detectives_cant_move = not any(self.detective_can_move)
         # If that is not the case, then the game is over
@@ -227,5 +253,28 @@ class ScotlandYardEnv:
             if not self.completed:
                 self.skip_turn()
 
-    def shortest_path(self, node_id):
-        return nx.dijkstra_path_length(self.G, self.detectives[node_id][0], self.mrX[0], weight='weight')
+    def shortest_path(self, det_id):
+        return nx.dijkstra_path_length(self.G, self.detectives[det_id][0], self.mrX[0], weight='weight')
+
+    def drawMap(self):
+        plt.clf()
+        plt.imshow(self.img)
+        plt.axis('off')
+        X = []
+        Y = []
+        for v in self.state[2]:
+            x,y = utils.graph_util.get_coords(self.G, v)
+            X.append(x)
+            Y.append(y)
+        plt.plot(X, Y, 'o', ms=11, color='none', mec='magenta')
+        X = []
+        Y = []
+        for v in self.state[0]:
+            x,y = utils.graph_util.get_coords(self.G, v)
+            X.append(x)
+            Y.append(y)
+        plt.plot(X, Y, 'D', ms=9, color='none', mec='cyan')
+        if self.state[1]:
+            x,y = utils.graph_util.get_coords(self.G, self.state[1])
+            plt.plot(x, y, '*', ms=10, color='none', mec='gold')
+        plt.show()
