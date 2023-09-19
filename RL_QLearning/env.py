@@ -200,6 +200,7 @@ class ScotlandYardEnv:
         # Simply update the position of the detective
         self.detectives[self.turn_sub_counter-1] = next_node
         self.state[0][self.turn_sub_counter-1] = next_node
+        self.state[2].discard(next_node)
 
     def step(self):
         """ Make a step in the environment and check whether the game is finished or not
