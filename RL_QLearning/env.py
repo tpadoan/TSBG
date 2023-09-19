@@ -117,10 +117,10 @@ class ScotlandYardEnv:
         return np.array(observation)
 
     def propagate(self, move: str):
-        target = set()
+        new = set()
         for s in self.state[2]:
-            target = target.union(utils.graph_util.destinations_by(self.G, s, move))
-        self.state[2] = target.difference(self.state[0])
+            new = new.union(utils.graph_util.destinations_by(self.G, s, move))
+        self.state[2] = new.difference(self.state[0])
 
     def get_valid_moves(self) -> np.ndarray[int]:
         """ Array of valid moves to play.

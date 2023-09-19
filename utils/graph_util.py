@@ -92,7 +92,7 @@ def node_one_hot_encoding(node_id: int, num_nodes: int) -> list[int]:
     Returns:
         list[int]: The one-hot encoding.
     """
-    return [1 if i == node_id - 1 else 0 for i in range(num_nodes)]
+    return [1 if (i+1) == node_id else 0 for i in range(num_nodes)]
 
 def nodes_ohe(nodes: set[int], num_nodes: int) -> set[int]:
     """ Generate a one-hot encoding of the input set of nodes in the graph.
