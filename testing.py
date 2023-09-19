@@ -19,7 +19,6 @@ def test_agent():
         detectives_model[i].eval()
     epsilon = np.linspace(1, 0, num=10)
 
-    start = 0
     countD = 0
     countX = 0
     str1 = ""
@@ -33,10 +32,9 @@ def test_agent():
             countX+=1
         else:
             countD+=1
-        #if(start%1==0):
-            #wins.write(str(start)+"\t"+str(countD)+"\t"+str(countX)+"\n")
-        str1 = str1 + (str(round(epsilon[start],2))+'\t'+str(countD)+'\t'+str(countX))
-        start = start + 1
+        #if(i%1==0):
+            #wins.write(str(i)+"\t"+str(countD)+"\t"+str(countX)+"\n")
+        str1 = str1 + (str(round(epsilon[i],2))+'\t'+str(countD)+'\t'+str(countX))
         str1 = str1+'\n'
         #diff[i] = countD-countX
     print(str1)

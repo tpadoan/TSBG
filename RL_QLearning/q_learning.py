@@ -53,7 +53,7 @@ class QLearning:
                 best_action, _ = self.get_best_action(current_observation, actions, self.model_detectives[sub_turn_counter-1])
                 action_probs[best_action] += (1. - self.explore)
             else:
-                # Probabilistic, based on squared distance from detectives
+                # Probabilistic, based on squared min distance from detectives
                 dists = [0]*actions.shape[0]
                 for i in range(actions.shape[0]):
                     dists[i] = self.env.min_shortest_path(actions[i][1])**2
