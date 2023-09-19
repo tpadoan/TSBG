@@ -20,7 +20,7 @@ class QLearning:
         length (List[float]): Distance at the end of the game of each detective w.r.t mrX.
     """
 
-    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], max_turns: int = 10, max explore: float = 0.0, interact: bool = False):
+    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], max_turns: int = 10, explore: float = 0.0, interact: bool = False):
         # Environment 
         self.env = env.ScotlandYardEnv(num_detectives=len(model_detectives), num_max_turns=max_turns, interactive=interact)
         self.explore = explore

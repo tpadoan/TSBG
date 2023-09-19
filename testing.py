@@ -20,7 +20,7 @@ def test_agent():
     #mrX_model.restore(episode=num_episodes)
     #mrX_model.eval()
     detectives_model = [DetectiveModel(num_nodes, num_detectives, max_turns, device).to(device) for _ in range(num_detectives)]
-    for i in range(len(detectives_model)):
+    for i in range(num_detectives):
         detectives_model[i].restore(episode=num_episodes+i)
         detectives_model[i].eval()
 
