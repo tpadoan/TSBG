@@ -9,6 +9,7 @@ def test_agent():
     print(f"Selected device is: {device}")
 
     num_episodes = 20000
+    interactive = True
 
     mrX_model = MrXModel(device).to(device)
     mrX_model.restore(episode=num_episodes)
@@ -25,8 +26,9 @@ def test_agent():
     print("Testing")
     print("Run\tD_wins\tX_wins\n")
     for i in range(len(epsilon)):
-        print(f"EPISODE {i}")
-        rl_setting = QLearning(mrX_model, detectives_model, explore=0., interact=True)
+        if interactive:
+            print(f"EPISODE {i}")
+        rl_setting = QLearning(mrX_model, detectives_model, explore=0., interact=interactive)
         reward, mrX_model, detectives_model = rl_setting.run_episode()
         if reward < 0:
             countX+=1
