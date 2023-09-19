@@ -20,8 +20,10 @@ class ScotlandYardEnv:
         reward (float): Reward assigned to the detectives.
         mrX_can_move (bool): Boolean to tell whether mrX can move or not.
         detective_can_move (List[bool]): Boolean to tell whether each detective can move or not.
+        random_start (bool): Flag stating wether initial positions of players should be chosen randomly or not.
+        interactive (bool): Flag stating wether the program should await some input before continuing executing after each move.
     """
-    def __init__(self, num_detectives: int = 2, num_max_turns: int = 10, interactive: bool = False):
+    def __init__(self, num_detectives: int = 2, num_max_turns: int = 10, random_start: bool = True, interactive: bool = False):
         self.G = None
         self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([])
@@ -35,6 +37,7 @@ class ScotlandYardEnv:
         self.reward = 0
         self.mrX_can_move = True
         self.detective_can_move = [True] * num_detectives
+        self.random_start = random_start
         self.interactive = interactive
 
         ### Metadata utilites
@@ -52,7 +55,10 @@ class ScotlandYardEnv:
         self.G = utils.graph_util.generate_graph()
         # Initialize the starting nodes
         num_players = 1 + self.detectives.shape[0]
-        self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=num_players, replace=False)
+        if self.random_start:
+            self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=num_players, replace=False)
+        else:
+            self.starting_nodes = [5,6,20]
         # Initialize mrX starting node
         self.mrX = np.array([self.starting_nodes[0]])
         self.state[1] = self.mrX[0]
