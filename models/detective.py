@@ -61,7 +61,10 @@ class DetectiveModel(nn.Module):
         x_tensor = torch.tensor(x, dtype=torch.float32, device=self.device)
         with torch.no_grad():
             output = self(x_tensor)
-        return output.numpy()
+        if self.device == 'cpu':
+            return output.numpy()
+        else:
+            return output.cpu().numpy()
 
     def save(self, episode):
         # Saving the model state dictionary to a file
