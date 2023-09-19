@@ -20,9 +20,9 @@ class QLearning:
         length (List[float]): Distance at the end of the game of each detective w.r.t mrX.
     """
 
-    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], max_turns: int = 10, explore: float = 0.0, interact: bool = False):
+    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], max_turns: int = 10, explore: float = 0.0, start: bool = True, interact: bool = False):
         # Environment 
-        self.env = env.ScotlandYardEnv(num_detectives=len(model_detectives), num_max_turns=max_turns, interactive=interact)
+        self.env = env.ScotlandYardEnv(num_detectives=len(model_detectives), num_max_turns=max_turns, random_start=start, interactive=interact)
         self.explore = explore
         self.reward = 0
 
@@ -86,7 +86,7 @@ class QLearning:
             action_taken = np.random.choice(np.arange(len(action_probs)), p=action_probs)
             next_node = actions[action_taken][1]
             transport_encoding = actions[action_taken][2:]
-            state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) + transport_encoding.tolist()
+            state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
             next_observation, reward, done = self.env.take_action(next_node, transport_encoding)
             actions = self.env.end_turn_valid_moves()
 
@@ -140,7 +140,7 @@ class QLearning:
         observation = [[] for _ in range(actions.shape[0])]
         for i in range(actions.shape[0]):
             next_node = utils.graph_util.node_one_hot_encoding(actions[i][1], num_nodes= self.env.G.number_of_nodes())
-            observation[i] = current_state.tolist() + next_node + actions[i][2:].tolist()
+            observation[i] = current_state.tolist() + next_node # + actions[i][2:].tolist()
         Q_values = model.predict(observation)
 
         return np.argmax(Q_values), np.amax(Q_values)

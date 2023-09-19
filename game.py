@@ -14,7 +14,7 @@ maxTurns = 20
 # number of detectives
 numDetectives = 2
 # number of epispdes used for learning
-numEpisodes = 30000
+numEpisodes = 20000
 
 coords = {}
 f = open("data/coords.txt", "r", encoding="utf8")
@@ -84,7 +84,7 @@ def getMoves(source):
   return [(c, 'cart') for c in cart[source]] + [(t, 'tram') for t in tram[source]] + [(b, 'boat') for b in boat[source]]
 
 def dest(source):
-  return boat[source]+tram[source]+cart[source]
+  return boat[source] + tram[source] + cart[source]
 
 def transportFor(source, target):
   if target in boat[source]:
@@ -105,14 +105,20 @@ def propagate(state, move):
   return new.difference(state[0])
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
+# fixed initial positions for detectives
+police = [6, 20]
+# random initial positions for detectives
+# police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
 drawMap([police,0,0,[]])
 detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
 for i in range(numDetectives):
   detectives_model[i].restore(episode=numEpisodes+i)
   detectives_model[i].eval()
 
-mrX = int((input('Mr.X initial location:\t')).strip())
+# fixed initial position mr.X
+mrX = 5
+# mr.X choses the initial position
+# mrX = int((input('Mr.X initial location:\t')).strip())
 tlog = [[0,0,0]]*maxTurns
 state = [police, mrX, tlog, {mrX}]
 drawMap(state)
@@ -150,7 +156,7 @@ while turn < maxTurns and not found:
     actions = getMoves(state[0][i])
     obs = [[] for _ in range(len(actions))]
     for j in range(len(actions)):
-      obs[j] = observation + node_ohe(actions[j][0]) + transport_ohe(actions[j][1])
+      obs[j] = observation + node_ohe(actions[j][0]) # + transport_ohe(actions[j][1])
     state[0][i] = actions[np.argmax(detectives_model[i].predict(obs))][0]
     state[3].discard(state[0][i])
   drawMap(state)
