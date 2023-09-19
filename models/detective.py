@@ -3,11 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 
 class DetectiveModel(nn.Module):
-
-    def __init__(self, device: str = 'cpu'):
+    def __init__(self, nodes, detectives, turns, device: str = 'cpu'):
         super(DetectiveModel, self).__init__()
         self.learning_rate = 1e-3
-        self.columns = 126
+        self.columns = 3*(1+turns)+detectives+nodes*(2+detectives)
 
         self.hidden1 = int(self.columns / 2)
         self.hidden2 = int(self.columns / 2)

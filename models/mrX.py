@@ -3,11 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 
 class MrXModel(nn.Module):
-
-    def __init__(self, device: str = 'cpu'):
+    def __init__(self, nodes, detectives, device: str = 'cpu'):
         super(MrXModel, self).__init__()
         self.learning_rate = 1e-3
-        self.columns = 109
+        self.columns = 4+nodes*(2+detectives)
 
         self.hidden1 = int(self.columns / 2)
         # self.hidden2 = int(self.columns / 2)

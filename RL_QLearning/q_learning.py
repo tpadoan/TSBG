@@ -95,14 +95,14 @@ class QLearning:
                 actions = np.array([[next_node, next_node, 0, 0, 0]])
 
             # Update the observation and Q value lists based on the player
-            if sub_turn_counter == 0:
-                _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
-                self.mrX_obs.append(state_used)
-                self.mrX_y.append([Q_max])
-            else:
+            if sub_turn_counter:
                 _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
                 self.detective_obs[sub_turn_counter].append(state_used)
                 self.detective_y[sub_turn_counter].append([Q_max])
+            # else:
+                # _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
+                # self.mrX_obs.append(state_used)
+                # self.mrX_y.append([Q_max])
         
         # Since the game is over, let's compute the distances of each detective w.r.t. mrX
         for i in range(len(self.model_detectives)):
