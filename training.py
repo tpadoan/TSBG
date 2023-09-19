@@ -14,23 +14,21 @@ def train_agent():
     num_episodes = 20000
     epsilon = np.linspace(1, 0, num=num_episodes)
 
-    start = 0
     countD = 0
     countX = 0
     str1 = ""
     print("Training")
     print("Run\tD_wins\tX_wins\n")
     for i in range(len(epsilon)):
-        rl_setting = QLearning(mrX_model, detectives_models, explore = epsilon[start])
+        rl_setting = QLearning(mrX_model, detectives_models, explore = epsilon[i])
         reward, mrX_model, detectives_models = rl_setting.run_episode()
         if reward < 0:
             countX+=1
         else:
             countD+=1
-        #if(start%1==0):
-            #wins.write(str(start)+"\t"+str(countD)+"\t"+str(countX)+"\n")
-        str1 = str1 + (str(round(epsilon[start],2))+'\t'+str(countD)+'\t'+str(countX))
-        start = start + 1
+        #if(i%1==0):
+            #wins.write(str(i)+"\t"+str(countD)+"\t"+str(countX)+"\n")
+        str1 = str1 + (str(round(epsilon[i],2))+'\t'+str(countD)+'\t'+str(countX))
         str1 = str1+'\n'
         #diff[i] = countD-countX
         if i>0 and not ((i+1)%(num_episodes/100)):
