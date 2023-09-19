@@ -32,20 +32,17 @@ def test_agent():
     for i in range(num_tests):
         if interactive:
             print(f"EPISODE {i+1}")
-        rl_setting = QLearning(mrX_model, detectives_model, explore=0., interact=interactive)
+        rl_setting = QLearning(mrX_model, detectives_model, max_turns, explore=0., interact=interactive)
         reward, mrX_model, detectives_model = rl_setting.run_episode()
         if reward < 0:
             countX += 1
         else:
             countD += 1
-        #if(i%1==0):
-            #wins.write(str(i) + "\t" + str(countD) + "\t" + str(countX) + "\n")
         str1 = str1 + (str(i+1) + '\t' + str(countD) + '\t' + str(countX))
         str1 = str1 + '\n'
-        #diff[i] = countD - countX
     print(str1)
-    print("X=", countX)
-    print("Detectives=", countD)
+    print("Detectives =", 100*countD/num_tests, "%")
+    print("Mr.X =", 100*countX/num_tests, "%")
 
 if __name__ == '__main__':
     test_agent()
