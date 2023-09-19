@@ -46,13 +46,25 @@ class QLearning:
         while not done:
             current_observation, sub_turn_counter = self.env.observe()
             actions = self.env.get_valid_moves()
+            action_probs = np.full(actions.shape[0], self.explore / actions.shape[0], dtype=float)
             # Switch allows to use an heuristic to decide the next position for mrX
             # switch = False
             if sub_turn_counter != 0:
                 best_action, _ = self.get_best_action(current_observation, actions, self.model_detectives[sub_turn_counter-1])
+                action_probs[best_action] += (1. - self.explore)
             else:
+                # Probabilistic, based on squared distance from detectives
+                dists = [0]*actions.shape[0]
+                for i in range(actions.shape[0]):
+                    dists[i] = self.env.min_shortest_path(actions[i][1])**2
+                tot = sum(dists)
+                if not tot:
+                    action_probs[0] += (1 - self.explore)
+                else:
+                    for i in range(len(action_probs)):
+                        action_probs[i] = dists[i] / tot
                 # Best action selection
-                best_action, _ = self.get_best_action(current_observation, actions, self.model_mrX)
+                # best_action, _ = self.get_best_action(current_observation, actions, self.model_mrX)
                 # # Random heuristic
                 # rand = random.randint(0, actions.shape[0]-1)
                 # next_node = actions[rand][1]
@@ -71,8 +83,6 @@ class QLearning:
                 # next_observation, reward, done = self.env.take_action(next_node, transport_encoding)
                 # continue
 
-            action_probs = np.full(actions.shape[0], self.explore / actions.shape[0], dtype=float)
-            action_probs[best_action] += (1. - self.explore)
             action_taken = np.random.choice(np.arange(len(action_probs)), p=action_probs)
             next_node = actions[action_taken][1]
             transport_encoding = actions[action_taken][2:]

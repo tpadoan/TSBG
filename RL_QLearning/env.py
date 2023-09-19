@@ -254,7 +254,15 @@ class ScotlandYardEnv:
                 self.skip_turn()
 
     def shortest_path(self, det_id):
-        return nx.dijkstra_path_length(self.G, self.detectives[det_id][0], self.mrX[0], weight='weight')
+        return nx.shortest_path_length(self.G, self.detectives[det_id][0], self.mrX[0])
+
+    def min_shortest_path(self, node):
+        md = nx.shortest_path_length(self.G, node, self.detectives[0][0])
+        for i in range(1, len(self.detectives)):
+            d = nx.shortest_path_length(self.G, node, self.detectives[i][0])
+            if d < md:
+                md = d
+        return md
 
     def drawMap(self):
         plt.clf()
