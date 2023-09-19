@@ -27,7 +27,7 @@ def test_agent():
     print("Run\tD_wins\tX_wins\n")
     for i in range(len(epsilon)):
         if interactive:
-            print(f"EPISODE {i}")
+            print(f"EPISODE {i+1}")
         rl_setting = QLearning(mrX_model, detectives_model, explore=0., interact=interactive)
         reward, mrX_model, detectives_model = rl_setting.run_episode()
         if reward < 0:
