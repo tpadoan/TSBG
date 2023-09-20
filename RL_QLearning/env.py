@@ -16,6 +16,7 @@ class ScotlandYardEnv:
         starting_nodes (np.ndarray): Starting node of each player.
         turn_number (int): Game turn number.
         turn_sub_counter (int): Player turn inside a single game turn. 0 means it's mrX's turn, otherwise it's i-th detective's turn.
+        reveals (list): List of the turns when mr.X must reveal its current position (after moving)
         completed (bool): Boolean to keep track of the game status.
         reward (float): Reward assigned to the detectives.
         mrX_can_move (bool): Boolean to tell whether mrX can move or not.
@@ -33,6 +34,7 @@ class ScotlandYardEnv:
         self.starting_nodes = None
         self.turn_number = 0
         self.turn_sub_counter = 0
+        self.reveals = [] # [i for i in range(1, num_max_turns+1) if (i%5) == 0]
         self.completed = False
         self.reward = 0
         self.mrX_can_move = True
@@ -54,9 +56,8 @@ class ScotlandYardEnv:
         # Initialize the game graph
         self.G = utils.graph_util.generate_graph()
         # Initialize the starting nodes
-        num_players = 1 + self.detectives.shape[0]
         if self.random_start or self.num_detectives > 3:
-            self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=num_players, replace=False)
+            self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=1+self.num_detectives, replace=False)
         else:
             self.starting_nodes = [5] + [20-7*i for i in range(self.num_detectives)]
         # Initialize mrX starting node
@@ -64,7 +65,7 @@ class ScotlandYardEnv:
         self.state[1] = self.mrX[0]
         self.state[2] = {self.mrX[0]}
         # Initialize the detectives' starting nodes
-        for i in range(self.detectives.shape[0]):
+        for i in range(self.num_detectives):
             self.detectives[i] = self.starting_nodes[i+1]
             self.state[0][i] = self.starting_nodes[i+1]
         if self.interactive:
@@ -166,7 +167,7 @@ class ScotlandYardEnv:
         self.last_move_by_which_player = self.turn_sub_counter
         self.turn_sub_counter += 1
         # One game turn is over
-        if self.turn_sub_counter >  self.num_detectives:
+        if self.turn_sub_counter > self.num_detectives:
             self.turn_sub_counter = 0
             self.turn_number += 1
 
@@ -185,16 +186,19 @@ class ScotlandYardEnv:
         # Update mrX position and state
         self.mrX[0] = next_node
         self.state[1] = next_node
-        if transport_one_hot[0]:
-            self.propagate('boat')
-        elif transport_one_hot[1]:
-            self.propagate('tram')
+        if self.turn_number+1 in self.reveals:
+            self.state[2] = {next_node}
         else:
-            self.propagate('cart')
+            if transport_one_hot[0]:
+                self.propagate('boat')
+            elif transport_one_hot[1]:
+                self.propagate('tram')
+            else:
+                self.propagate('cart')
         # Register the new position in the locations log
-        self.mrX_locations[self.turn_number-1] = next_node
+        self.mrX_locations[self.turn_number] = next_node
         # Register the used transport in the transport log
-        self.mrX_transport_log[self.turn_number-1] = transport_one_hot
+        self.mrX_transport_log[self.turn_number] = transport_one_hot
     
     def play_detective(self, next_node: int):
         """ Make a detective play.
@@ -215,7 +219,7 @@ class ScotlandYardEnv:
             self.drawMap()
             if input(f"sub_turn {self.turn_sub_counter} done, continue?\t") == 'n':
                 quit()
-        
+
         # Check that mrX can still move
         if utils.mrX_util.valid_moves_list(self.G, self.mrX).size == 0:
             self.mrX_can_move = False
@@ -238,7 +242,7 @@ class ScotlandYardEnv:
                 return
 
         # The last scenario is the one in which we reached the maximum number of turns
-        if self.turn_number == self.max_turns:
+        if self.turn_number == self.max_turns-1 and self.turn_sub_counter == self.num_detectives:
             self.completed = True
             self.reward = -100
 
