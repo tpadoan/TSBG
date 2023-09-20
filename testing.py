@@ -42,8 +42,8 @@ def test_agent():
         str1 = str1 + (str(i+1) + "\t" + str(countD) + "\t" + str(countX))
         str1 = str1 + '\n'
     print(str1)
-    print("Detectives =", round(100*countD/num_episodes, 2), "%")
-    print("Mr.X =", round(100*countX/num_episodes, 2), "%")
+    print("Detectives =", round(100*countD/num_tests, 2), "%")
+    print("Mr.X =", round(100*countX/num_tests, 2), "%")
 
 if __name__ == '__main__':
     test_agent()
