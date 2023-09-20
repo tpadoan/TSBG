@@ -12,7 +12,9 @@ reveals = []
 # maximum number of turns to catch mr.X
 maxTurns = 20
 # number of detectives
-numDetectives = 2
+numDetectives = 3
+# flag for fixed initial positions of players
+fixed = False
 # number of epispdes used for learning
 numEpisodes = 20000
 
@@ -105,20 +107,22 @@ def propagate(state, move):
   return new.difference(state[0])
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-# fixed initial positions for detectives
-police = [6, 20]
-# random initial positions for detectives
-# police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
+police = None
+if fixed:
+  police = [6, 20]
+else
+  police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
 drawMap([police,0,0,[]])
 detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
 for i in range(numDetectives):
   detectives_model[i].restore(episode=numEpisodes+i)
   detectives_model[i].eval()
 
-# fixed initial position mr.X
-mrX = 5
-# mr.X choses the initial position
-# mrX = int((input('Mr.X initial location:\t')).strip())
+mrX = None
+if fixed:
+  mrX = 5
+else:
+  mrX = int((input('Mr.X initial location:\t')).strip())
 tlog = [[0,0,0]]*maxTurns
 state = [police, mrX, tlog, {mrX}]
 drawMap(state)
@@ -146,6 +150,8 @@ while turn < maxTurns and not found:
   else:
     state[3] = propagate(state, move)
   drawMap(state)
+  if state[1] in state[0]:
+    found = True
 
   for i in range(numDetectives):
     observation = nodes_ohe(state[3]) + [1 if j==i else 0 for j in range(numDetectives)]
@@ -160,6 +166,8 @@ while turn < maxTurns and not found:
     state[0][i] = actions[np.argmax(detectives_model[i].predict(obs))][0]
     state[3].discard(state[0][i])
   drawMap(state)
+  if state[1] in state[0]:
+    found = True
 
 if found:
   print('Game ended, the detectives apprehended Mr.X!')

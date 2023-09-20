@@ -11,7 +11,7 @@ def train_agent():
 
     random_start = True
     num_episodes = 20000
-    num_detectives = 2
+    num_detectives = 3
     num_nodes = 21
     max_turns = 20
 
