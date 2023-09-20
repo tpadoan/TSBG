@@ -109,7 +109,7 @@ def propagate(state, move):
 device = "cuda" if torch.cuda.is_available() else "cpu"
 police = None
 if fixed and numDetectives<4:
-  police = [20-7*i for i in range(self.num_detectives)]
+  police = [20-7*i for i in range(numDetectives)]
 else:
   police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
 drawMap([police,0,0,[]])
