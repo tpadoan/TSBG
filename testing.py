@@ -12,7 +12,7 @@ def test_agent():
     random_start = True
     num_tests = 100
     num_episodes = 20000
-    num_detectives = 2
+    num_detectives = 3
     num_nodes = 21
     max_turns = 20
 
