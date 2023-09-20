@@ -11,7 +11,8 @@ class ScotlandYardEnv:
         G (nx.Graph): Board nodes graph.
         detectives (np.ndarray): Array containing current position of each detective involved in mrX's chase.
         mrX (np.ndarray): mrX current position.
-        mrX_locations (np.ndarray): Array of locations that mrX will visit during the game (at most == maximum number of turns played).
+        det_locations (list): List of lists of locations that each detective will visit during the game (at most == number of detective times maximum number of turns played).
+        mrX_locations (list): List of locations that mrX will visit during the game (at most == maximum number of turns played).
         mrX_transport_log (np.ndarray): Array of transports used by mrX in each turn
         starting_nodes (np.ndarray): Starting node of each player.
         turn_number (int): Game turn number.
@@ -29,12 +30,13 @@ class ScotlandYardEnv:
         self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([])
         self.state = [[0 for _ in range(num_detectives)], 0, {0}]
-        self.mrX_locations = np.array([0]*num_max_turns)
+        self.det_locations = [[0]*num_max_turns for i in range(num_detectives)]
+        self.mrX_locations = [0]*num_max_turns
         self.mrX_transport_log = np.array([[0,0,0]]*num_max_turns)
         self.starting_nodes = None
         self.turn_number = 0
         self.turn_sub_counter = 0
-        self.reveals = [] # [i for i in range(1, num_max_turns+1) if (i%5) == 0]
+        self.reveals = [i for i in range(1, num_max_turns+1)]
         self.completed = False
         self.reward = 0
         self.mrX_can_move = True
@@ -81,12 +83,10 @@ class ScotlandYardEnv:
         """
         # If it is one of the detectives' turn
         if self.turn_sub_counter != 0:
-            current_state = self.observe_as_detective()
+            return (self.observe_as_detective(), self.turn_sub_counter)
         # Otherwise, it is mrX turn
         else:
-            current_state = self.observe_as_mrX()
-
-        return (current_state, self.turn_sub_counter)
+            return (self.observe_as_mrX(), self.turn_sub_counter)
 
     def observe_as_mrX(self) -> np.ndarray[int]:
         """ The observation from mrX point of view is made of its position, the detectives ones and the turn number.
@@ -149,7 +149,7 @@ class ScotlandYardEnv:
         if self.last_move_by_which_player == 0:
             return utils.mrX_util.valid_moves_list(self.G, self.mrX)
         else:
-            return utils.detective_util.valid_moves_list(self.G, self.detectives, self.last_move_by_which_player - 1)
+            return utils.detective_util.valid_moves_list(self.G, self.detectives, self.last_move_by_which_player-1)
 
     def take_action(self, next_node: int, transport_one_hot: np.ndarray[int]):
         if self.completed:
@@ -211,6 +211,7 @@ class ScotlandYardEnv:
         self.detectives[self.turn_sub_counter-1] = next_node
         self.state[0][self.turn_sub_counter-1] = next_node
         self.state[2].discard(next_node)
+        self.det_locations[self.turn_sub_counter-1][self.turn_number] = next_node
 
     def step(self):
         """ Make a step in the environment and check whether the game is finished or not
