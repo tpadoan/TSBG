@@ -7,10 +7,10 @@ from models.detective import DetectiveModel
 sizeGraph = 21
 # list of names of moves, same order as in graph utils
 movesNames = ['boat', 'tram', 'cart']
-# turns when mr.X location is revealed to the detectives
-reveals = []
 # maximum number of turns to catch mr.X
 maxTurns = 20
+# turns when mr.X location is revealed to the detectives
+reveals = []
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
