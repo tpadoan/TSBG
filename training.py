@@ -24,7 +24,7 @@ def train_agent():
     countX = 0
     str1 = ""
     print(f"Training with {num_episodes} runs")
-    print("Run\tD_wins\tX_wins\tDiff\n")
+    print("Run\tD_wins\tX_wins\tDiff\tD_winrate\n")
     for i in range(num_episodes):
         rl_setting = QLearning(mrX_model, detectives_models, max_turns, explore = epsilon[i], start=random_start)
         reward, mrX_model, detectives_models = rl_setting.run_episode()
@@ -33,9 +33,9 @@ def train_agent():
         else:
             countD += 1
         if i>0 and not ((i+1)%(num_episodes/100)):
-            print(str(int((i+1)/(num_episodes/100))) + "%\t" + str(countD) + "\t" + str(countX) + "\t" + str(countD-countX))
-    print("Detectives =", 100*countD/num_episodes, "%")
-    print("Mr.X =", 100*countX/num_episodes, "%")
+            print(str(int((i+1)/(num_episodes/100))) + "%\t" + str(countD) + "\t" + str(countX) + "\t" + str(countD-countX) + "\t" + str(round(100*countD/(i+1), 2)) + " %")
+    print("Detectives =", round(100*countD/num_episodes, 2), "%")
+    print("Mr.X =", round(100*countX/num_episodes, 2), "%")
     #mrX_model.save(episode=num_episodes)
     for i, detective in enumerate(detectives_models):
         detective.save(episode=num_episodes+i)
