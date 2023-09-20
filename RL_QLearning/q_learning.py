@@ -114,19 +114,6 @@ class QLearning:
 
         return self.reward, self.model_mrX, self.model_detectives
 
-    def q_learn(self):
-        """ Learning phase for the detectives.
-        """
-        gamma = 0.9
-        for i, detective_obs in self.detective_obs.items():
-            num_of_observations = len(detective_obs)
-            if num_of_observations != 0:
-                reward = self.reward
-                for j in range(num_of_observations):
-                    multiplier = num_of_observations - j
-                    self.detective_y[i][j][0] += gamma * reward  * multiplier
-                self.model_detectives[i-1].optimize(self.detective_obs[i], self.detective_y[i])
-
     def get_best_action(self, current_state: np.ndarray[int], actions: np.ndarray[int], model: nn.Module) -> tuple[int, float]:
         """ QLearning update rule implementation.
 
@@ -140,8 +127,21 @@ class QLearning:
         """
         observation = [[] for _ in range(actions.shape[0])]
         for i in range(actions.shape[0]):
-            next_node = utils.graph_util.node_one_hot_encoding(actions[i][1], num_nodes= self.env.G.number_of_nodes())
+            next_node = utils.graph_util.node_one_hot_encoding(actions[i][1], self.env.G.number_of_nodes())
             observation[i] = current_state.tolist() + next_node # + actions[i][2:].tolist()
         Q_values = model.predict(observation)
 
         return np.argmax(Q_values), np.amax(Q_values)
+
+    def q_learn(self):
+        """ Learning phase for the detectives.
+        """
+        gamma = 0.9
+        for i, detective_obs in self.detective_obs.items():
+            num_of_observations = len(detective_obs)
+            if num_of_observations != 0:
+                reward = self.reward
+                for j in range(num_of_observations):
+                    multiplier = num_of_observations - j
+                    self.detective_y[i][j][0] += gamma * reward * multiplier
+                self.model_detectives[i-1].optimize(self.detective_obs[i], self.detective_y[i])

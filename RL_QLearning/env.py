@@ -86,7 +86,7 @@ class ScotlandYardEnv:
             return (self.observe_as_detective(), self.turn_sub_counter)
         # Otherwise, it is mrX turn
         else:
-            return (self.observe_as_mrX(), self.turn_sub_counter)
+            return (None, self.turn_sub_counter) # (self.observe_as_mrX(), self.turn_sub_counter)
 
     def observe_as_mrX(self) -> np.ndarray[int]:
         """ The observation from mrX point of view is made of its position, the detectives ones and the turn number.
@@ -112,6 +112,7 @@ class ScotlandYardEnv:
         """
         # Possible positions of mr.X taking into account the moves and the starting position
         observation = utils.graph_util.nodes_ohe(self.state[2], self.G.number_of_nodes())
+        return np.array(observation) ##############################################################
         # Inform which detective is playing
         observation += [1 if i == self.turn_sub_counter-1 else 0 for i in range(len(self.detectives))]
         # Add each detective current position
