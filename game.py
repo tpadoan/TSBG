@@ -82,8 +82,8 @@ def nodes_ohe(nodes):
 def transport_ohe(move):
   return [1 if move == t else 0 for t in movesNames]
 
-def getMoves(source):
-  return [(c, 'cart') for c in cart[source]] + [(t, 'tram') for t in tram[source]] + [(b, 'boat') for b in boat[source]]
+def getMoves(police, det_id):
+  return [(c, 'cart') for c in cart[police[det_id]] if c not in police] + [(t, 'tram') for t in tram[police[det_id]] if t not in police] + [(b, 'boat') for b in boat[police[det_id]] if b not in police]
 
 def dest(source):
   return boat[source] + tram[source] + cart[source]
@@ -110,7 +110,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 police = None
 if fixed and numDetectives<4:
   police = [20-7*i for i in range(self.num_detectives)]
-else
+else:
   police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
 drawMap([police,0,0,[]])
 detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
@@ -159,7 +159,7 @@ while turn < maxTurns and not found:
       observation.extend(node_ohe(state[0][j]))
     for t in state[2]:
       observation.extend(t)
-    actions = getMoves(state[0][i])
+    actions = getMoves(state[0], i)
     obs = [[] for _ in range(len(actions))]
     for j in range(len(actions)):
       obs[j] = observation + node_ohe(actions[j][0]) # + transport_ohe(actions[j][1])
