@@ -33,8 +33,8 @@ class QLearning:
         # Observations and predictions for each model
         self.mrX_obs = []
         self.mrX_y = []
-        self.detective_obs = {i: [] for i in range(1, len(model_detectives)+1)}
-        self.detective_y = {i: [] for i in range(1, len(model_detectives)+1)} 
+        self.detective_obs = {i:[] for i in range(1, len(model_detectives)+1)}
+        self.detective_y = {i:[] for i in range(1, len(model_detectives)+1)} 
         
         # Metadata
         self.length = []
@@ -86,7 +86,6 @@ class QLearning:
             action_taken = np.random.choice(np.arange(len(action_probs)), p=action_probs)
             next_node = actions[action_taken][1]
             transport_encoding = actions[action_taken][2:]
-            state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
             next_observation, reward, done = self.env.take_action(next_node, transport_encoding)
             actions = self.env.end_turn_valid_moves()
 
@@ -97,16 +96,18 @@ class QLearning:
             # Update the observation and Q value lists based on the player
             if sub_turn_counter:
                 _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
+                state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
                 self.detective_obs[sub_turn_counter].append(state_used)
                 self.detective_y[sub_turn_counter].append([Q_max])
             # else:
                 # _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
+                # state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
                 # self.mrX_obs.append(state_used)
                 # self.mrX_y.append([Q_max])
-        
+
         # Since the game is over, let's compute the distances of each detective w.r.t. mrX
-        for i in range(len(self.model_detectives)):
-            self.length.append(self.env.shortest_path(i))
+        #for i in range(len(self.model_detectives)):
+        #    self.length.append(self.env.shortest_path(i))
 
         self.reward = reward
         self.q_learn()
