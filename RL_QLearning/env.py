@@ -55,10 +55,10 @@ class ScotlandYardEnv:
         self.G = utils.graph_util.generate_graph()
         # Initialize the starting nodes
         num_players = 1 + self.detectives.shape[0]
-        if self.random_start:
+        if self.random_start or self.num_detectives > 3:
             self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=num_players, replace=False)
         else:
-            self.starting_nodes = [5,6,20]
+            self.starting_nodes = [5] + [20-7*i for i in range(self.num_detectives)]
         # Initialize mrX starting node
         self.mrX = np.array([self.starting_nodes[0]])
         self.state[1] = self.mrX[0]
