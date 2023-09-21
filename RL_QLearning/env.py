@@ -112,16 +112,16 @@ class ScotlandYardEnv:
         """
         # Possible positions of mr.X taking into account the moves and the starting position
         observation = utils.graph_util.nodes_ohe(self.state[2], self.G.number_of_nodes())
+        observation.extend(utils.graph_util.node_one_hot_encoding(self.detectives[self.turn_sub_counter-1][0], self.G.number_of_nodes()))
         return np.array(observation) ##############################################################
         # Inform which detective is playing
         observation += [1 if i == self.turn_sub_counter-1 else 0 for i in range(len(self.detectives))]
         # Add each detective current position
         for i in range(len(self.detectives)):
-            observation.extend(utils.graph_util.node_one_hot_encoding(node_id = self.detectives[i][0], num_nodes = self.G.number_of_nodes()))
+            observation.extend(utils.graph_util.node_one_hot_encoding(self.detectives[i][0], self.G.number_of_nodes()))
         # Add the log of the transports used by mrX in the whole game
         for transport_log in self.mrX_transport_log:
             observation.extend(transport_log.tolist())
-
         return np.array(observation)
 
     def propagate(self, move: str):

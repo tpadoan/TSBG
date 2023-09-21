@@ -9,7 +9,7 @@ def train_agent():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Selected device is: {device}")
 
-    random_start = True
+    random_start = False
     num_episodes = 20000
     num_detectives = 3
     num_nodes = 21
