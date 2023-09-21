@@ -53,16 +53,26 @@ class QLearning:
                 best_action, _ = self.get_best_action(current_observation, actions, self.model_detectives[sub_turn_counter-1])
                 action_probs[best_action] += (1. - self.explore)
             else:
-                # Probabilistic, based on squared min distance from detectives
-                dists = [0]*actions.shape[0]
+                # Maximising min distance from detectives
+                max_dist = 0
+                best = 0
                 for i in range(actions.shape[0]):
-                    dists[i] = self.env.min_shortest_path(actions[i][1])**2
-                tot = sum(dists)
-                if not tot:
-                    action_probs[0] += (1 - self.explore)
-                else:
-                    for i in range(len(action_probs)):
-                        action_probs[i] = dists[i] / tot
+                    action_probs[i] = 0
+                    dist = self.env.min_shortest_path(actions[i][1])
+                    if max_dist < dist:
+                        best = i
+                        max_dist = dist
+                action_probs[best] = 1
+                # Probabilistic, based on squared min distance from detectives
+                # dists = [0]*actions.shape[0]
+                # for i in range(actions.shape[0]):
+                    # dists[i] = self.env.min_shortest_path(actions[i][1])**2
+                # tot = sum(dists)
+                # if not tot:
+                    # action_probs[0] += (1 - self.explore)
+                # else:
+                    # for i in range(len(action_probs)):
+                        # action_probs[i] = dists[i] / tot
                 # Best action selection
                 # best_action, _ = self.get_best_action(current_observation, actions, self.model_mrX)
                 # # Random heuristic
@@ -98,7 +108,7 @@ class QLearning:
                 _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
                 state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
                 self.detective_obs[sub_turn_counter].append(state_used)
-                self.detective_y[sub_turn_counter].append([Q_max])
+                self.detective_y[sub_turn_counter].append([np.float(-self.env.shortest_path(sub_turn_counter-1))]) # [Q_max])
             # else:
                 # _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
                 # state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
@@ -139,9 +149,9 @@ class QLearning:
         gamma = 0.9
         for i, detective_obs in self.detective_obs.items():
             num_of_observations = len(detective_obs)
-            if num_of_observations != 0:
-                reward = self.reward
-                for j in range(num_of_observations):
-                    multiplier = num_of_observations - j
-                    self.detective_y[i][j][0] += gamma * reward * multiplier
+            if num_of_observations > 0:
+                # reward = self.reward
+                # for j in range(num_of_observations):
+                    # multiplier = num_of_observations - j
+                    # self.detective_y[i][j][0] += gamma * reward * multiplier
                 self.model_detectives[i-1].optimize(self.detective_obs[i], self.detective_y[i])
