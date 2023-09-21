@@ -36,11 +36,11 @@ class DetectiveModel(nn.Module):
         self.fc_out = nn.Linear(self.hidden3, self.out)
 
         self.relu = nn.ReLU()
-        
+
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         self.device = device
-        
+
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.relu(self.fc2(x))

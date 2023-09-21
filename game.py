@@ -8,7 +8,7 @@ sizeGraph = 21
 # list of names of moves, same order as in graph utils
 movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
-maxTurns = 20
+maxTurns = 10
 # turns when mr.X location is revealed to the detectives
 reveals = [i+1 for i in range(maxTurns)]
 # number of detectives
@@ -154,11 +154,12 @@ while turn < maxTurns and not found:
     found = True
 
   for i in range(numDetectives):
-    observation = nodes_ohe(state[3]) + [1 if j==i else 0 for j in range(numDetectives)]
-    for j in range(numDetectives):
-      observation.extend(node_ohe(state[0][j]))
-    for t in state[2]:
-      observation.extend(t)
+    observation = nodes_ohe(state[3]) # + [1 if j==i else 0 for j in range(numDetectives)]
+    observation.extend(node_ohe(state[0][i]))
+    # for j in range(numDetectives):
+    #  observation.extend(node_ohe(state[0][j]))
+    # for t in state[2]:
+    #  observation.extend(t)
     actions = getMoves(state[0], i)
     obs = [[] for _ in range(len(actions))]
     for j in range(len(actions)):
