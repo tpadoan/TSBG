@@ -8,13 +8,13 @@ def test_agent():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Selected device is: {device}")
 
-    interactive = False
+    interactive = True
     random_start = True
     num_tests = 100
     num_episodes = 20000
     num_detectives = 3
     num_nodes = 21
-    max_turns = 20
+    max_turns = 10
 
     mrX_model = None
     #mrX_model = MrXModel(num_nodes, num_detectives, device).to(device)

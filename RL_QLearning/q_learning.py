@@ -108,7 +108,7 @@ class QLearning:
                 _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
                 state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
                 self.detective_obs[sub_turn_counter].append(state_used)
-                self.detective_y[sub_turn_counter].append([np.float(-self.env.shortest_path(sub_turn_counter-1))]) # [Q_max])
+                self.detective_y[sub_turn_counter].append([np.float32(-self.env.shortest_path(sub_turn_counter-1))]) # [Q_max])
             # else:
                 # _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
                 # state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()

@@ -9,11 +9,11 @@ def train_agent():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Selected device is: {device}")
 
-    random_start = False
+    random_start = True
     num_episodes = 20000
     num_detectives = 3
     num_nodes = 21
-    max_turns = 20
+    max_turns = 10
 
     #mrX_model = MrXModel(num_nodes, num_detectives, device).to(device)
     mrX_model = None
