@@ -65,6 +65,7 @@ class ScotlandYardEnv:
         # Initialize mrX starting node
         self.mrX = np.array([self.starting_nodes[0]])
         self.state[1] = self.mrX[0]
+        # self.state[2] = {self.mrX[0]:1.0}
         self.state[2] = {self.mrX[0]}
         # Initialize the detectives' starting nodes
         for i in range(self.num_detectives):
@@ -130,6 +131,23 @@ class ScotlandYardEnv:
             new = new.union(utils.graph_util.destinations_by(self.G, s, move))
         self.state[2] = new.difference(self.state[0])
 
+    def propagate_prob(self, move: str):
+        new = {}
+        tot = 0
+        for node,prob in self.state[2].items():
+            succ = utils.graph_util.destinations_by(self.G, node, move).difference(self.state[0])
+            size = len(succ)
+            for s in succ:
+                p = prob/size
+                if s in new:
+                    new[s] += p
+                else:
+                    new[s] = p
+                tot += p
+        for node,prob in new.items():
+            new[node] = prob/tot
+        self.state[2] = new
+
     def get_valid_moves(self) -> np.ndarray[int]:
         """ Array of valid moves to play.
 
@@ -188,6 +206,7 @@ class ScotlandYardEnv:
         self.mrX[0] = next_node
         self.state[1] = next_node
         if self.turn_number+1 in self.reveals:
+            # self.state[2] = {next_node:1.0}
             self.state[2] = {next_node}
         else:
             if transport_one_hot[0]:
@@ -211,6 +230,11 @@ class ScotlandYardEnv:
         # Simply update the position of the detective
         self.detectives[self.turn_sub_counter-1] = next_node
         self.state[0][self.turn_sub_counter-1] = next_node
+        # diff = self.state[2].pop(next_node, False):
+        # if diff:
+        #    tot = 1.0 - diff
+        #    for node,prob in self.state[2].items():
+        #        self.state[2][node] = prob/tot
         self.state[2].discard(next_node)
         self.det_locations[self.turn_sub_counter-1][self.turn_number] = next_node
 
