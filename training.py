@@ -1,6 +1,5 @@
 import numpy as np
-import torch 
-
+import torch
 from RL_QLearning.q_learning import QLearning
 from models.mrX import MrXModel
 from models.detective import DetectiveModel
@@ -22,7 +21,6 @@ def train_agent():
 
     countD = 0
     countX = 0
-    str1 = ""
     print(f"Training with {num_episodes} runs")
     print("Run\tD_wins\tX_wins\tDiff\tD_winrate\n")
     for i in range(num_episodes):
