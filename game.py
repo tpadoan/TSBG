@@ -14,7 +14,7 @@ reveals = [i+1 for i in range(maxTurns)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
-fixed = False
+fixed = True
 # number of epispdes used for learning
 numEpisodes = 20000
 
@@ -35,7 +35,7 @@ def drawMap(state):
   plt.axis('off')
   X = []
   Y = []
-  for p in state[3]:
+  for p in state[3].keys():
     X.append(coords[p][0])
     Y.append(coords[p][1])
   plt.plot(X, Y, 'o', ms=11, color='none', mec='magenta')
@@ -106,6 +106,23 @@ def propagate(state, move):
       new = new.union(cart[s])
   return new.difference(state[0])
 
+def propagate_prob(state, move):
+  new = {}
+  tot = 0
+  for node,prob in self.state[3].items():
+    succ = utils.graph_util.destinations_by(self.G, node, move).difference(self.state[0])
+    size = len(succ)
+    for s in succ:
+      p = prob/size
+      if s in new:
+        new[s] += p
+      else:
+        new[s] = p
+      tot += p
+  for node,prob in new.items():
+    new[node] = prob/tot
+  return new
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 police = None
 if fixed and numDetectives<4:
@@ -124,7 +141,7 @@ if fixed and numDetectives<4:
 else:
   mrX = int((input('Mr.X initial location:\t')).strip())
 tlog = [[0,0,0]]*maxTurns
-state = [police, mrX, tlog, {mrX}]
+state = [police, mrX, tlog, {mrX:1.0}]
 drawMap(state)
 
 turn = 0
@@ -146,15 +163,15 @@ while turn < maxTurns and not found:
   state[2][turn-1] = transport_ohe(move)
   if turn in reveals:
     print('Mr.X location has been revealed')
-    state[3] = {state[1]}
+    state[3] = {state[1]:1.0}
   else:
-    state[3] = propagate(state, move)
+    state[3] = propagate_prob(state, move)
   drawMap(state)
   if state[1] in state[0]:
     found = True
 
   for i in range(numDetectives):
-    observation = nodes_ohe(state[3]) # + [1 if j==i else 0 for j in range(numDetectives)]
+    observation = nodes_ohe(state[3].keys()) # + [1 if j==i else 0 for j in range(numDetectives)]
     observation.extend(node_ohe(state[0][i]))
     # for j in range(numDetectives):
     #  observation.extend(node_ohe(state[0][j]))
@@ -165,7 +182,11 @@ while turn < maxTurns and not found:
     for j in range(len(actions)):
       obs[j] = observation + node_ohe(actions[j][0]) # + transport_ohe(actions[j][1])
     state[0][i] = actions[np.argmax(detectives_model[i].predict(obs))][0]
-    state[3].discard(state[0][i])
+    diff = self.state[3].pop(state[0][i], False):
+    if diff:
+      tot = 1.0 - diff
+      for node,prob in self.state[3].items():
+        self.state[3][node] = prob/tot
   drawMap(state)
   if state[1] in state[0]:
     found = True
