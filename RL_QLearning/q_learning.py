@@ -50,10 +50,10 @@ class QLearning:
         nodes = list(self.env.G.nodes)
         for i in range(len(self.env.G.nodes)):
             for j in range(len(self.env.G.nodes)):
-                # for k in range(len(self.env.G.nodes)):
-                #     for m in range(len(self.env.G.nodes)):
-                        current_pair = (nodes[i], nodes[j])
-                        # current_pair = (nodes[i], nodes[j], nodes[k], nodes[m])
+                for k in range(len(self.env.G.nodes)):
+                    for m in range(len(self.env.G.nodes)):
+                        # current_pair = (nodes[i], nodes[j])
+                        current_pair = (nodes[i], nodes[j], nodes[k], nodes[m])
                         self.state_idx_mapping[current_pair] = len(self.state_idx_mapping)
         if q_table is not None:
             for key in q_table:
@@ -193,8 +193,8 @@ class QLearning:
             detective_playing = self.env.turn_sub_counter
             filter_indices = [action[1]-1 for action in actions]
             filtered_q_table = np.take(self.detective_y[detective_playing], filter_indices, axis=1)
-            # all_detective_positions = [self.env.detectives[i][0] for i in range(len(self.model_detectives))]
-            all_detective_positions = [self.env.detectives[self.env.turn_sub_counter-1][0]]
+            all_detective_positions = [self.env.detectives[i][0] for i in range(len(self.model_detectives))]
+            # all_detective_positions = [self.env.detectives[self.env.turn_sub_counter-1][0]]
             mrX_pos = [self.env.mrX[0]]
             current_state = all_detective_positions + mrX_pos
             action_idx = np.argmax(filtered_q_table[self.state_idx_mapping[tuple(current_state)]-1])
