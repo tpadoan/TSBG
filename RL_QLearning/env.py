@@ -62,9 +62,11 @@ class ScotlandYardEnv:
             self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=1+self.num_detectives, replace=False)
         else:
             self.starting_nodes = [5] + [20-7*i for i in range(self.num_detectives)]
+        self.max_min_distance = max([values for key in dict(nx.all_pairs_shortest_path_length(self.G)) for values in dict(nx.all_pairs_shortest_path_length(self.G))[key]])
         # Initialize mrX starting node
         self.mrX = np.array([self.starting_nodes[0]])
         self.state[1] = self.mrX[0]
+        # self.state[2] = {self.mrX[0]:1.0}
         self.state[2] = {self.mrX[0]}
         # Initialize the detectives' starting nodes
         for i in range(self.num_detectives):
@@ -130,6 +132,23 @@ class ScotlandYardEnv:
             new = new.union(utils.graph_util.destinations_by(self.G, s, move))
         self.state[2] = new.difference(self.state[0])
 
+    def propagate_prob(self, move: str):
+        new = {}
+        tot = 0
+        for node,prob in self.state[2].items():
+            succ = utils.graph_util.destinations_by(self.G, node, move).difference(self.state[0])
+            size = len(succ)
+            for s in succ:
+                p = prob/size
+                if s in new:
+                    new[s] += p
+                else:
+                    new[s] = p
+                tot += p
+        for node,prob in new.items():
+            new[node] = prob/tot
+        self.state[2] = new
+
     def get_valid_moves(self) -> np.ndarray[int]:
         """ Array of valid moves to play.
 
@@ -188,6 +207,7 @@ class ScotlandYardEnv:
         self.mrX[0] = next_node
         self.state[1] = next_node
         if self.turn_number+1 in self.reveals:
+            # self.state[2] = {next_node:1.0}
             self.state[2] = {next_node}
         else:
             if transport_one_hot[0]:
@@ -211,6 +231,11 @@ class ScotlandYardEnv:
         # Simply update the position of the detective
         self.detectives[self.turn_sub_counter-1] = next_node
         self.state[0][self.turn_sub_counter-1] = next_node
+        # diff = self.state[2].pop(next_node, False):
+        # if diff:
+        #    tot = 1.0 - diff
+        #    for node,prob in self.state[2].items():
+        #        self.state[2][node] = prob/tot
         self.state[2].discard(next_node)
         self.det_locations[self.turn_sub_counter-1][self.turn_number] = next_node
 
@@ -231,22 +256,27 @@ class ScotlandYardEnv:
         # Check that any detectives can still move
         self.detective_can_move = [utils.detective_util.valid_moves_list(self.G, self.detectives, i).size != 0 for i in range(len(self.detectives))]
         all_detectives_cant_move = not any(self.detective_can_move)
+
+        # Add local reward for each detective
+        # if self.turn_sub_counter != 0:
+        #     self.reward = 1-self.shortest_path(self.turn_sub_counter-1)/self.max_min_distance
+
         # If that is not the case, then the game is over
         if all_detectives_cant_move:
             self.completed = True
-            self.reward = -100
+            self.reward = -1
 
         # Check that mrX is not in the same position as one of the detectives
         for detective in self.detectives:
             if detective[0] == self.mrX[0]:
                 self.completed = True
-                self.reward = 100
+                self.reward = 1
                 return
 
         # The last scenario is the one in which we reached the maximum number of turns
         if self.turn_number == self.max_turns-1 and self.turn_sub_counter == self.num_detectives:
             self.completed = True
-            self.reward = -100
+            self.reward = -1
 
     def skip_turn(self):
         """ Function to let the other players play in the case one cannot move anymore
