@@ -50,9 +50,10 @@ class QLearning:
         nodes = list(self.env.G.nodes)
         for i in range(len(self.env.G.nodes)):
             for j in range(len(self.env.G.nodes)):
-                for k in range(len(self.env.G.nodes)):
-                    for m in range(len(self.env.G.nodes)):
-                        current_pair = (nodes[i], nodes[j], nodes[k], nodes[m])
+                # for k in range(len(self.env.G.nodes)):
+                #     for m in range(len(self.env.G.nodes)):
+                        current_pair = (nodes[i], nodes[j])
+                        # current_pair = (nodes[i], nodes[j], nodes[k], nodes[m])
                         self.state_idx_mapping[current_pair] = len(self.state_idx_mapping)
         if q_table is not None:
             for key in q_table:
@@ -65,7 +66,7 @@ class QLearning:
 
         self.episode_reward = 0
 
-    def run_episode(self):
+    def run_episode(self, evaluation = False):
         self.env.initialize_game()
         done = False
 
@@ -125,12 +126,12 @@ class QLearning:
             next_node = actions[best_action_idx][1]
             transport_encoding = actions[best_action_idx][2:]
             all_detective_positions = [self.env.detectives[i][0] for i in range(len(self.model_detectives))]
-            mrX_pos = self.env.mrX[0]
-            current_state = all_detective_positions+mrX_pos
+            mrX_pos = [self.env.mrX[0]]
+            current_state = all_detective_positions + mrX_pos
             next_observation, reward, done = self.env.take_action(next_node, transport_encoding)
             self.episode_reward += reward
             ###
-            if sub_turn_counter != 0:
+            if sub_turn_counter != 0 and not evaluation:
                 old_value = self.detective_y[sub_turn_counter][self.state_idx_mapping[tuple(current_state)]-1, next_node-1]
                 filter_indices = [action[1]-1 for action in actions]
                 filtered_q_table = np.take(self.detective_y[sub_turn_counter], filter_indices, axis=1)
@@ -138,7 +139,7 @@ class QLearning:
                 next_state[sub_turn_counter-1] = next_node
                 next_max = np.max(filtered_q_table[self.state_idx_mapping[tuple(next_state)]-1])
                 new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
-                self.detective_y[sub_turn_counter][self.state_idx_mapping[current_state]-1, next_node-1] = new_value
+                self.detective_y[sub_turn_counter][self.state_idx_mapping[tuple(current_state)]-1, next_node-1] = new_value
 
             # # actions = self.env.end_turn_valid_moves()
 
@@ -147,7 +148,6 @@ class QLearning:
             # #     actions = np.array([[next_node, next_node, 0, 0, 0]])
 
             # Update the observation and Q value lists based on the player
-            if sub_turn_counter:
                 # _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
                 state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
                 self.detective_obs[sub_turn_counter].append(state_used)
@@ -193,7 +193,11 @@ class QLearning:
             detective_playing = self.env.turn_sub_counter
             filter_indices = [action[1]-1 for action in actions]
             filtered_q_table = np.take(self.detective_y[detective_playing], filter_indices, axis=1)
-            action_idx = np.argmax(filtered_q_table[self.state_idx_mapping[(self.env.detectives[detective_playing-1][0], self.env.mrX[0])]-1])
+            # all_detective_positions = [self.env.detectives[i][0] for i in range(len(self.model_detectives))]
+            all_detective_positions = [self.env.detectives[self.env.turn_sub_counter-1][0]]
+            mrX_pos = [self.env.mrX[0]]
+            current_state = all_detective_positions + mrX_pos
+            action_idx = np.argmax(filtered_q_table[self.state_idx_mapping[tuple(current_state)]-1])
             action = actions[action_idx][1]
 
         return action_idx, action
