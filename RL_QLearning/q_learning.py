@@ -1,5 +1,8 @@
 import torch.nn as nn
 import numpy as np
+import random
+from itertools import permutations
+
 import RL_QLearning.env as env
 from models.detective import DetectiveModel
 from models.mrX import MrXModel
@@ -20,7 +23,7 @@ class QLearning:
         length (List[float]): Distance at the end of the game of each detective w.r.t mrX.
     """
 
-    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], max_turns: int = 10, explore: float = 0.0, start: bool = True, interact: bool = False):
+    def __init__(self, model_mrX: MrXModel, model_detectives: np.ndarray[DetectiveModel], max_turns: int = 10, explore: float = 0.0, start: bool = True, interact: bool = False, q_table = None, alpha = 0.1):
         # Environment 
         self.env = env.ScotlandYardEnv(num_detectives=len(model_detectives), num_max_turns=max_turns, random_start=start, interactive=interact)
         self.explore = explore
@@ -38,6 +41,29 @@ class QLearning:
         
         # Metadata
         self.length = []
+        # Tabular q_learning hyperparameters
+        self.alpha = alpha      # Learning rate
+        self.gamma = 0.99       # Discount factor
+        self.epsilon = explore  # Exploration exploitation term
+        self.env.initialize_game()
+        self.state_idx_mapping = {}
+        nodes = list(self.env.G.nodes)
+        for i in range(len(self.env.G.nodes)):
+            for j in range(len(self.env.G.nodes)):
+                for k in range(len(self.env.G.nodes)):
+                    for m in range(len(self.env.G.nodes)):
+                        current_pair = (nodes[i], nodes[j], nodes[k], nodes[m])
+                        self.state_idx_mapping[current_pair] = len(self.state_idx_mapping)
+        if q_table is not None:
+            for key in q_table:
+                self.detective_y[key] = q_table[key]
+        else:
+            # Q_table, size is equal to (the size of the observation space (i.e. the state space)*number of detectives) X (the size of the action space)
+            # self.q_table = np.zeros([len(self.env.G.nodes)*len(self.model_detectives), len(self.env.G.nodes)])
+            for key in self.detective_y:
+                self.detective_y[key] = np.zeros([len(self.env.G.nodes)**(len(model_detectives)+1), len(self.env.G.nodes)])
+
+        self.episode_reward = 0
 
     def run_episode(self):
         self.env.initialize_game()
@@ -50,19 +76,20 @@ class QLearning:
             # Switch allows to use an heuristic to decide the next position for mrX
             # switch = False
             if sub_turn_counter != 0:
-                best_action, _ = self.get_best_action(current_observation, actions, self.model_detectives[sub_turn_counter-1])
-                action_probs[best_action] += (1. - self.explore)
+                best_action_idx, best_action = self.get_best_action(current_observation, actions, self.model_detectives[sub_turn_counter-1])
+                action_probs[best_action_idx] += (1. - self.explore)
+                current_node = self.env.detectives[sub_turn_counter-1][0]
             else:
                 # Maximising min distance from detectives
                 max_dist = 0
-                best = 0
+                best_action_idx = 0
                 for i in range(actions.shape[0]):
                     action_probs[i] = 0
                     dist = self.env.min_shortest_path(actions[i][1])
                     if max_dist < dist:
-                        best = i
+                        best_action_idx = i
                         max_dist = dist
-                action_probs[best] = 1
+                action_probs[best_action_idx] = 1
                 # Probabilistic, based on squared min distance from detectives
                 # dists = [0]*actions.shape[0]
                 # for i in range(actions.shape[0]):
@@ -93,22 +120,38 @@ class QLearning:
                 # next_observation, reward, done = self.env.take_action(next_node, transport_encoding)
                 # continue
 
-            action_taken = np.random.choice(np.arange(len(action_probs)), p=action_probs)
-            next_node = actions[action_taken][1]
-            transport_encoding = actions[action_taken][2:]
+            # Tabular q_learning update
+            # action_taken = np.random.choice(np.arange(len(action_probs)), p=action_probs)
+            next_node = actions[best_action_idx][1]
+            transport_encoding = actions[best_action_idx][2:]
+            all_detective_positions = [self.env.detectives[i][0] for i in range(len(self.model_detectives))]
+            mrX_pos = self.env.mrX[0]
+            current_state = all_detective_positions+mrX_pos
             next_observation, reward, done = self.env.take_action(next_node, transport_encoding)
-            actions = self.env.end_turn_valid_moves()
+            self.episode_reward += reward
+            ###
+            if sub_turn_counter != 0:
+                old_value = self.detective_y[sub_turn_counter][self.state_idx_mapping[tuple(current_state)]-1, next_node-1]
+                filter_indices = [action[1]-1 for action in actions]
+                filtered_q_table = np.take(self.detective_y[sub_turn_counter], filter_indices, axis=1)
+                next_state = current_state[:]
+                next_state[sub_turn_counter-1] = next_node
+                next_max = np.max(filtered_q_table[self.state_idx_mapping[tuple(next_state)]-1])
+                new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
+                self.detective_y[sub_turn_counter][self.state_idx_mapping[current_state]-1, next_node-1] = new_value
 
-            # If there are no available actions then we stay in the node
-            if actions.shape[0] == 0:
-                actions = np.array([[next_node, next_node, 0, 0, 0]])
+            # # actions = self.env.end_turn_valid_moves()
+
+            # # # If there are no available actions then we stay in the node
+            # # if actions.shape[0] == 0:
+            # #     actions = np.array([[next_node, next_node, 0, 0, 0]])
 
             # Update the observation and Q value lists based on the player
             if sub_turn_counter:
-                _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
+                # _, Q_max = self.get_best_action(next_observation, actions, self.model_detectives[sub_turn_counter-1])
                 state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
                 self.detective_obs[sub_turn_counter].append(state_used)
-                self.detective_y[sub_turn_counter].append([np.float32(-self.env.shortest_path(sub_turn_counter-1))]) # [Q_max])
+                # self.detective_y[sub_turn_counter].append([np.float32(-self.env.shortest_path(sub_turn_counter-1))]) # [Q_max])
             # else:
                 # _, Q_max = self.get_best_action(next_observation, actions, self.model_mrX)
                 # state_used = current_observation.tolist() + utils.graph_util.node_one_hot_encoding(next_node, self.env.G.number_of_nodes()) # + transport_encoding.tolist()
@@ -120,9 +163,9 @@ class QLearning:
         #    self.length.append(self.env.shortest_path(i))
 
         self.reward = reward
-        self.q_learn()
+        # self.q_learn()
 
-        return self.reward, self.model_mrX, self.model_detectives
+        return self.reward, self.model_mrX, self.model_detectives, self.detective_y, self.episode_reward
 
     def get_best_action(self, current_state: np.ndarray[int], actions: np.ndarray[int], model: nn.Module) -> tuple[int, float]:
         """ QLearning update rule implementation.
@@ -139,9 +182,22 @@ class QLearning:
         for i in range(actions.shape[0]):
             next_node = utils.graph_util.node_one_hot_encoding(actions[i][1], self.env.G.number_of_nodes())
             observation[i] = current_state.tolist() + next_node # + actions[i][2:].tolist()
-        Q_values = model.predict(observation)
+        # Q_values = model.predict(observation)
+        # return np.argmax(Q_values), np.amax(Q_values)
 
-        return np.argmax(Q_values), np.amax(Q_values)
+        if random.uniform(0, 1) < self.epsilon:
+            action_idx = np.random.randint(0, len(actions))
+            action = actions[action_idx][1]
+        else:
+            # Filter the Q_table based on the possible destinations of the agent
+            detective_playing = self.env.turn_sub_counter
+            filter_indices = [action[1]-1 for action in actions]
+            filtered_q_table = np.take(self.detective_y[detective_playing], filter_indices, axis=1)
+            action_idx = np.argmax(filtered_q_table[self.state_idx_mapping[(self.env.detectives[detective_playing-1][0], self.env.mrX[0])]-1])
+            action = actions[action_idx][1]
+
+        return action_idx, action
+
 
     def q_learn(self):
         """ Learning phase for the detectives.
