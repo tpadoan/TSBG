@@ -50,7 +50,7 @@ def train_agent():
     print("Mr.X =", round(100*countX/num_episodes, 2), "%")
 
     # Save the final q_tables as pickle file    
-    with open("qtables_exponential.pickle", "wb") as f:
+    with open("qtables_exponential_3_15_50000_fully_obs.pickle", "wb") as f:
         pickle.dump(q_table, f)
 
     #mrX_model.save(episode=num_episodes)
