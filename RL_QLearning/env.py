@@ -258,8 +258,8 @@ class ScotlandYardEnv:
         all_detectives_cant_move = not any(self.detective_can_move)
 
         # Add local reward for each detective
-        # if self.turn_sub_counter != 0:
-        #     self.reward = 1-self.shortest_path(self.turn_sub_counter-1)/self.max_min_distance
+        if self.turn_sub_counter != 0:
+            self.reward = 1-self.shortest_path(self.turn_sub_counter-1)/self.max_min_distance
 
         # If that is not the case, then the game is over
         if all_detectives_cant_move:
