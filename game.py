@@ -1,6 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from stable_baselines3 import PPO, A2C, DQN
+from sb3_contrib.common.wrappers import ActionMasker
+from sb3_contrib.ppo_mask import MaskablePPO
+from sb3_contrib.common.maskable.utils import get_action_masks
+
+from sb3_SY import ScotlandYard, mask_fn
+
 from models.detective import DetectiveModel
 
 # size of graph
@@ -29,7 +36,7 @@ for s in content.split('\n'):
 im = plt.imread('data/graph.png')
 plt.ion()
 
-def drawMap(state):
+def drawMap(state, sub_turn):
   plt.clf()
   plt.imshow(im)
   plt.axis('off')
@@ -38,15 +45,16 @@ def drawMap(state):
   for p in state[3]:
     X.append(coords[p][0])
     Y.append(coords[p][1])
-  plt.plot(X, Y, 'o', ms=11, color='none', mec='magenta')
+  plt.plot(X, Y, 'o', ms=11, color='red', mec='magenta')
   X = []
   Y = []
   for p in state[0]:
     X.append(coords[p][0])
     Y.append(coords[p][1])
-  plt.plot(X, Y, 'D', ms=9, color='none', mec='cyan')
+  plt.plot(X, Y, 'D', ms=11, color='blue', mec='cyan')
   if state[1]:
     plt.plot(coords[state[1]][0], coords[state[1]][1], '*', ms=10, color='none', mec='gold')
+  plt.title(f'Player {sub_turn} is currently playing')
   plt.show()
 
 boat = {(i+1):[] for i in range(sizeGraph)}
@@ -107,25 +115,31 @@ def propagate(state, move):
   return new.difference(state[0])
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-police = None
-if fixed and numDetectives<4:
-  police = [20-7*i for i in range(numDetectives)]
-else:
-  police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
-drawMap([police,0,0,[]])
-detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
-for i in range(numDetectives):
-  detectives_model[i].restore(episode=numEpisodes+i)
-  detectives_model[i].eval()
+# police = None
+# if fixed and numDetectives<4:
+#   police = [20-7*i for i in range(numDetectives)]
+# else:
+#   police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
+# drawMap([police,0,0,[]])
+# detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
 
-mrX = None
-if fixed and numDetectives<4:
-  mrX = 5
-else:
-  mrX = int((input('Mr.X initial location:\t')).strip())
+max_turns = 10
+detectives_model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+env_SY = ScotlandYard(random_start=True, num_detectives=3, max_turns=max_turns)
+env = ActionMasker(env_SY, mask_fn)
+detectives_model.set_env(env)
+# for i in range(numDetectives):
+#   detectives_model[i].restore(episode=numEpisodes+i)
+#   detectives_model[i].eval()
+
+mrX = env.starting_nodes[0]
+# if fixed and numDetectives<4:
+#   mrX = 5
+# else:
+#   mrX = int((input('Mr.X initial location:\t')).strip())
 tlog = [[0,0,0]]*maxTurns
-state = [police, mrX, tlog, {mrX}]
-drawMap(state)
+state = [env.starting_nodes[1:], mrX, tlog, {mrX}]
+drawMap(state, None)
 
 turn = 0
 found = False
@@ -149,26 +163,28 @@ while turn < maxTurns and not found:
     state[3] = {state[1]}
   else:
     state[3] = propagate(state, move)
-  drawMap(state)
+  drawMap(state, 0)
   if state[1] in state[0]:
     found = True
 
+  env_SY.turn_sub_counter += 1
   for i in range(numDetectives):
+      # for i in range(numDetectives):
     observation = nodes_ohe(state[3]) # + [1 if j==i else 0 for j in range(numDetectives)]
-    observation.extend(node_ohe(state[0][i]))
-    # for j in range(numDetectives):
-    #  observation.extend(node_ohe(state[0][j]))
-    # for t in state[2]:
-    #  observation.extend(t)
-    actions = getMoves(state[0], i)
-    obs = [[] for _ in range(len(actions))]
-    for j in range(len(actions)):
-      obs[j] = observation + node_ohe(actions[j][0]) # + transport_ohe(actions[j][1])
-    state[0][i] = actions[np.argmax(detectives_model[i].predict(obs))][0]
+    for ohe in [node_ohe(state[0][j]) for j in range(numDetectives)]:
+      observation.extend(ohe)
+    action_masks = get_action_masks(env)
+    action, _ = detectives_model.predict(observation, action_masks=action_masks)
+    obs, reward, done, truncated, info = env.step(action)
+    drawMap(state, i+1)
+    plt.pause(2)
+    state[0][i] = action+1
     state[3].discard(state[0][i])
-  drawMap(state)
-  if state[1] in state[0]:
-    found = True
+    drawMap(state, i+1)
+    plt.pause(2)
+    if state[1] in state[0]:
+      found = True
+      break
 
 if found:
   print('Game ended, the detectives apprehended Mr.X!')
