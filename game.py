@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import pickle
-# import numpy as np
-# import torch
-# from models.detective import DetectiveModel
+from numpy.random import choice
 
 # size of graph
 sizeGraph = 21
@@ -11,13 +9,11 @@ movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [i+1 for i in range(maxTurns)]
+reveals = [3,6,9] # [i+1 for i in range(maxTurns)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
 fixed = True
-# number of epispdes used for learning
-numEpisodes = 20000
 
 coords = {}
 f = open("data/coords.txt", "r", encoding="utf8")
@@ -36,7 +32,7 @@ def drawMap(state):
   plt.axis('off')
   X = []
   Y = []
-  for p in state[3].keys():
+  for p in state[2].keys():
     X.append(coords[p][0])
     Y.append(coords[p][1])
   plt.plot(X, Y, 'o', ms=11, color='none', mec='magenta')
@@ -76,18 +72,6 @@ for s in content.split('\n'):
 
 P = pickle.load(open("models/Pi", "rb"))
 
-def node_ohe(node):
-  return [1 if (i+1) == node else 0 for i in range(sizeGraph)]
-
-def nodes_ohe(nodes):
-  return [1 if (i+1) in nodes else 0 for i in range(sizeGraph)]
-
-def transport_ohe(move):
-  return [1 if move == t else 0 for t in movesNames]
-
-def getMoves(police, det_id):
-  return [(c, 'cart') for c in cart[police[det_id]] if c not in police] + [(t, 'tram') for t in tram[police[det_id]] if t not in police] + [(b, 'boat') for b in boat[police[det_id]] if b not in police]
-
 def dest(source):
   return boat[source] + tram[source] + cart[source]
 
@@ -98,21 +82,10 @@ def transportFor(source, target):
     return 'tram'
   return 'cart'
 
-def propagate(state, move):
-  new = set()
-  for s in state[3]:
-    if move == 'boat':
-      new = new.union(boat[s])
-    elif move == 'tram':
-      new = new.union(tram[s])
-    else:
-      new = new.union(cart[s])
-  return new.difference(state[0])
-
 def propagate_prob(state, move):
   new = {}
   tot = 0
-  for node,prob in state[3].items():
+  for node,prob in state[2].items():
     transport = None
     if move=='cart':
       transport = cart
@@ -134,26 +107,19 @@ def propagate_prob(state, move):
   return new
 
 
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-# detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
-# for i in range(numDetectives):
-  # detectives_model[i].restore(episode=numEpisodes+i)
-  # detectives_model[i].eval()
-
 police = None
 if fixed and numDetectives<4:
   police = [20-7*i for i in range(numDetectives)]
 else:
   police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
-drawMap([police,0,0,{}])
+drawMap([police,0,{}])
 
 mrX = None
 if fixed and numDetectives<4:
   mrX = 5
 else:
   mrX = int((input('Mr.X initial location:\t')).strip())
-tlog = [[0,0,0]]*maxTurns
-state = [police, mrX, tlog, {mrX:1.0}]
+state = [police, mrX, {mrX:1.0}]
 drawMap(state)
 
 turn = 0
@@ -172,33 +138,24 @@ while turn < maxTurns and not found:
   mrX = int(mrX)
   move = transportFor(state[1], mrX)
   state[1] = mrX
-  state[2][turn-1] = transport_ohe(move)
   if turn in reveals:
     print('Mr.X location has been revealed')
-    state[3] = {state[1]:1.0}
+    state[2] = {state[1]:1.0}
   else:
-    state[3] = propagate_prob(state, move)
+    state[2] = propagate_prob(state, move)
   drawMap(state)
   if state[1] in state[0]:
     found = True
+    break
 
   for i in range(numDetectives):
-    observation = nodes_ohe(state[3].keys()) # + [1 if j==i else 0 for j in range(numDetectives)]
-    observation.extend(node_ohe(state[0][i]))
-    # for j in range(numDetectives):
-    #  observation.extend(node_ohe(state[0][j]))
-    # for t in state[2]:
-    #  observation.extend(t)
-    actions = getMoves(state[0], i)
-    obs = [[] for _ in range(len(actions))]
-    for j in range(len(actions)):
-      obs[j] = observation + node_ohe(actions[j][0]) # + transport_ohe(actions[j][1])
-    state[0][i] = P[turn-1][i+1][tuple((state[0][k-1] if k>0 else state[1] for k in range(numDetectives+1)))] # actions[np.argmax(detectives_model[i].predict(obs))][0]
-    diff = state[3].pop(state[0][i], False)
+    x = choice(list(state[2].keys()), p=list(state[2].values()))
+    state[0][i] = P[turn-1][i+1][tuple((state[0][k-1] if k>0 else x for k in range(numDetectives+1)))]
+    diff = state[2].pop(state[0][i], False)
     if diff:
       tot = 1.0 - diff
-      for node,prob in state[3].items():
-        state[3][node] = prob/tot
+      for node,prob in state[2].items():
+        state[2][node] = prob/tot
     if state[1] in state[0]:
       found = True
       break
