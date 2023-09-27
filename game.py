@@ -4,16 +4,16 @@ from numpy.random import choice
 
 # size of graph
 sizeGraph = 21
-# list of names of moves, same order as in graph utils
-movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [3,6,9] # [i+1 for i in range(maxTurns)]
+reveals = [5] # [i+1 for i in range(maxTurns)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
 fixed = True
+# list of names of moves, same order as in graph utils
+movesNames = ['boat', 'tram', 'cart']
 
 coords = {}
 f = open("data/coords.txt", "r", encoding="utf8")
