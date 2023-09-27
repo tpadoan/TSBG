@@ -1,24 +1,37 @@
-import stable_baselines3
-import gym
-from gym.spaces import Discrete, MultiDiscrete, Dict, Box
+import gymnasium as gym
+from gymnasium.spaces import Discrete, MultiDiscrete
+from stable_baselines3.common.env_checker import check_env
+from stable_baselines3 import PPO, A2C, DQN
+from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+from sb3_contrib.common.wrappers import ActionMasker
+from sb3_contrib.ppo_mask import MaskablePPO
+from sb3_contrib.common.maskable.utils import get_action_masks
+from stable_baselines3.common.evaluation import evaluate_policy
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import utils.graph_util, utils.detective_util, utils.mrX_util
 
 class ScotlandYard(gym.Env):
-    def __init__(self, steps : int, G: nx.Graph, starting_nodes, num_detectives):
-        self.G = G
-        self.steps = steps
-        self.starting_nodes = starting_nodes
+    def __init__(self, random_start, num_detectives, max_turns):
+        self.G = utils.graph_util.generate_graph()
         self.num_detectives = num_detectives
+        self.max_turns = max_turns
+
+        ### Initialization
+        if random_start or self.num_detectives > 3:
+            self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=1+self.num_detectives, replace=False)
+        else:
+            self.starting_nodes = [5] + [20-7*i for i in range(self.num_detectives)]
+
         # Action space
-        self.action_space = Discrete(len(self.G.number_of_nodes())**2)
+        self.action_space = Discrete(self.G.number_of_nodes(), start = 0)
+
         # State space description
         # The state will be the one hot encoding of mrX position followed by the i-th detective position
-        self.observation_space = MultiDiscrete([1] * 3*len(self.G.number_of_nodes()))
+        self.observation_space = MultiDiscrete([2] * 4*self.G.number_of_nodes())
 
-        self.state = [utils.graph_util.node_one_hot_encoding(node) for node in starting_nodes]
+        self.state = np.array([utils.graph_util.node_one_hot_encoding(node_id=node, num_nodes=self.G.number_of_nodes()) for node in self.starting_nodes]).flatten()
 
         self.turn_number = 0
         self.turn_sub_counter = 0
@@ -33,22 +46,35 @@ class ScotlandYard(gym.Env):
         self.reward = 0
         self.img = plt.imread('data/graph.png')
 
-    def step(self, action, evaluation = False):
-        # Decrease the steps for RL agent
-        self.steps -= 1
+    def step(self, action):
         valid_moves = self.get_valid_moves()
         valid_dst = [move[1] for move in valid_moves]
+
+        # If there are no valid destination, then mrX cannot move anymore and the game is over
+        if self.turn_sub_counter == 0 and not valid_dst:
+            self.reward = 1
+            self.done = True
+            return self.state, self.reward, self.done, False, {}
+
         # When the action leads to an invalid node, ignore the iteration
-        if action not in valid_dst:
-            self.reward = 0
+        if action+1 not in valid_dst:
+            self.reward = -0.5
             self.done = False
-            return self.state, self.reward, self.done
+            return self.state, self.reward, self.done, False, {}
         
         else:
-            next_node = action
+            next_node = action+1
             # Let the corresponding player play
             if self.turn_sub_counter == 0:
-                self.mrX[0] = next_node
+                # Maximising min distance from detectives
+                max_dist = 0
+                best_action_idx = 0
+                for i in range(valid_moves.shape[0]):
+                    dist = self.min_shortest_path(valid_moves[i][1])
+                    if max_dist < dist:
+                        best_action_idx = i
+                        max_dist = dist
+                self.mrX[0] = valid_moves[best_action_idx][1]
             else:
                 self.detectives[self.turn_sub_counter-1] = next_node
 
@@ -59,12 +85,27 @@ class ScotlandYard(gym.Env):
 
             self.turn_sub_counter += 1
 
+            # if evaluation is True:
+            #     env.render()
+
             # One game turn is over
             if self.turn_sub_counter > self.num_detectives:
                 self.turn_sub_counter = 0
                 self.turn_number += 1
 
-            return self.state, self.reward, self.done
+            # In the case one of the player cannot move anymore, we let the other ones play
+            self.skip_turn()
+
+            return self.state, self.reward, self.done, False, {}
+
+    def valid_action_mask(self):
+        valid_moves = self.get_valid_moves()
+        valid_dst = [move[1] for move in valid_moves]
+        action_masks = np.zeros((self.G.number_of_nodes(),))
+        for valid_node in valid_dst:
+            action_masks[valid_node-1] = 1
+
+        return action_masks
         
     def game_step(self):
         """ Make a step in the environment and check whether the game is finished or not
@@ -75,7 +116,7 @@ class ScotlandYard(gym.Env):
                 quit()
 
         # Check that mrX can still move
-        if utils.mrX_util.valid_moves_list(self.G, self.mrX).size == 0:
+        if utils.mrX_util.valid_moves_list(self.G, self.mrX, self.detectives).size == 0:
             self.mrX_can_move = False
         else:
             self.mrX_can_move = True
@@ -84,14 +125,11 @@ class ScotlandYard(gym.Env):
         self.detective_can_move = [utils.detective_util.valid_moves_list(self.G, self.detectives, i).size != 0 for i in range(len(self.detectives))]
         all_detectives_cant_move = not any(self.detective_can_move)
 
-        # Add local reward for each detective
-        if self.turn_sub_counter != 0:
-            self.reward = 1-self.shortest_path(self.turn_sub_counter-1)/self.max_min_distance
-
         # If that is not the case, then the game is over
         if all_detectives_cant_move:
             self.done = True
             self.reward = -1
+            return
 
         # Check that mrX is not in the same position as one of the detectives
         for detective in self.detectives:
@@ -105,6 +143,23 @@ class ScotlandYard(gym.Env):
             self.done = True
             self.reward = -1
 
+    def skip_turn(self):
+        """ Function to let the other players play in the case one cannot move anymore
+        """
+        if self.turn_sub_counter == 0 and not self.mrX_can_move:
+            self.turn_sub_counter += 1
+            self.game_step()
+            if not self.done:
+                self.skip_turn()
+
+        elif self.turn_sub_counter > 0 and not self.detective_can_move[self.turn_sub_counter - 1]:
+            self.turn_sub_counter += 1
+            if self.turn_sub_counter > self.num_detectives:
+                self.turn_sub_counter = 0
+                self.turn_sub_counter += 1
+            self.game_step()
+            if not self.done:
+                self.skip_turn()
 
     def get_valid_moves(self) -> np.ndarray[int]:
         """ Array of valid moves to play.
@@ -115,7 +170,7 @@ class ScotlandYard(gym.Env):
         if self.turn_sub_counter != 0:
             return utils.detective_util.valid_moves_list(self.G, self.detectives, self.turn_sub_counter-1)
         else:
-            return utils.mrX_util.valid_moves_list(self.G, self.mrX)
+            return utils.mrX_util.valid_moves_list(self.G, self.mrX, self.detectives)
 
     def observe(self) -> tuple[np.ndarray[int], int]:
         """ Observe the environment based on which player is playing.
@@ -128,7 +183,7 @@ class ScotlandYard(gym.Env):
             return (self.observe_as_detective(), self.turn_sub_counter)
         # Otherwise, it is mrX turn
         else:
-            return (None, self.turn_sub_counter) # (self.observe_as_mrX(), self.turn_sub_counter)
+            return (self.observe_as_mrX(), self.turn_sub_counter)
 
     def observe_as_mrX(self) -> np.ndarray[int]:
         """ The observation from mrX point of view is made of its position, the detectives ones and the turn number.
@@ -158,39 +213,111 @@ class ScotlandYard(gym.Env):
 
         return np.array(observation)
 
+    def shortest_path(self, det_id):
+        return nx.shortest_path_length(self.G, self.detectives[det_id][0], self.mrX[0])
+
+    def min_shortest_path(self, node):
+        md = nx.shortest_path_length(self.G, node, self.detectives[0][0])
+        for i in range(1, len(self.detectives)):
+            d = nx.shortest_path_length(self.G, node, self.detectives[i][0])
+            if d < md:
+                md = d
+        return md
+
     def render(self):
         plt.clf()
         plt.imshow(self.img)
         plt.axis('off')
         X = []
         Y = []
-        for v in self.state[2]:
+        for v in self.mrX:
             x,y = utils.graph_util.get_coords(self.G, v)
             X.append(x)
             Y.append(y)
-        plt.plot(X, Y, 'o', ms=11, color='none', mec='magenta')
+        plt.plot(X, Y, 'o', ms=11, color='red', mec='magenta')
         X = []
         Y = []
-        for v in self.state[0]:
-            x,y = utils.graph_util.get_coords(self.G, v)
+        for v in self.detectives:
+            x,y = utils.graph_util.get_coords(self.G, v[0])
             X.append(x)
             Y.append(y)
-        plt.plot(X, Y, 'D', ms=9, color='none', mec='cyan')
-        if self.state[1]:
-            x,y = utils.graph_util.get_coords(self.G, self.state[1])
-            plt.plot(x, y, '*', ms=10, color='none', mec='gold')
+        plt.plot(X, Y, 'D', ms=11, color='blue', mec='cyan')
+        plt.title(f"Player {self.turn_sub_counter} turn")
         plt.show()
 
-    def reset(self):
-        self.detectives = np.array([[0] for _ in range(len(self.detectives))])
+    def reset(self, seed = None, options = None):
+        # Generate a new set of starting nodes
+        self.starting_nodes = np.random.choice(np.array(range(1,self.G.number_of_nodes()+1)), size=1+self.num_detectives, replace=False)
         self.mrX = np.array([self.starting_nodes[0]])
         for i in range(self.num_detectives):
             self.detectives[i] = self.starting_nodes[i+1]
         self.done = False
         self.reward = 0
-        self.state = [utils.graph_util.node_one_hot_encoding(node) for node in self.starting_nodes]
+        self.state = np.array([utils.graph_util.node_one_hot_encoding(node, self.G.number_of_nodes()) for node in self.starting_nodes]).flatten()
+        self.turn_number = 0
+        self.turn_sub_counter = 0
 
-        return self.state
+        return self.state, {}
+
+def mask_fn(env: ScotlandYard) -> np.ndarray:
+    # Do whatever you'd like in this function to return the action mask
+    # for the current env. In this example, we assume the env has a
+    # helpful method we can rely on.
+    return env.valid_action_mask()
 
 if __name__ == "__main__":
-    pass
+
+    random_start = True
+    num_episodes = 20000
+    num_detectives = 3
+    num_nodes = 21
+    max_turns = 10
+
+    env = ScotlandYard(random_start=random_start, num_detectives=num_detectives, max_turns=max_turns)
+    env = ActionMasker(env, mask_fn)
+
+    # model = MaskablePPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=30)
+    # # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
+    # # # model = DQN("MlpPolicy", env, verbose=1)
+    # # # # print("Policy results before training")
+    # # # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
+    # timesteps = 5000
+    # for i in range(30):
+    #     model.learn(total_timesteps=timesteps, reset_num_timesteps = False)
+    # # # #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO")
+    # # # #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO", callback=eval_callback)
+    # # #     # print(f"WITH deepcopy took: {time.time()-start}s to learn in 5000 steps")
+    # model.save(f"Masked_PPO_SY_150k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+    # model.save(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+
+    model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+    # model = PPO.load(f"PPO_SY_50k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+    # model = DQN.load(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+    model.set_env(env)
+
+    countD = 0
+    countX = 0
+    num_tests = 100
+
+    str1 = ""
+    print(f"Testing on {num_tests} runs")
+    print("Run\tD_wins\tX_wins\n")
+    for i in range(num_tests):
+        done = False
+        obs, _ = env.reset()
+        # env.render()
+        while not done:
+            # print(f"before step {obs}")
+            action_masks = get_action_masks(env)
+            action, _ = model.predict(obs, action_masks=action_masks)
+            obs, reward, done, truncated, info = env.step(action)
+        # env.render()
+        if reward < 0:
+            countX += 1
+        elif reward > 0:
+            countD += 1
+        str1 = str1 + (str(i+1) + "\t" + str(countD) + "\t" + str(countX))
+        str1 = str1 + '\n'
+    print(str1)
+    print("Detectives =", round(100*countD/num_tests, 2), "%")
+    print("Mr.X =", round(100*countX/num_tests, 2), "%")
