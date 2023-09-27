@@ -12,7 +12,7 @@ numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
 fixed = True
 # number of tests
-numTests = 100
+numTests = 1000
 
 boat = {(i+1):[] for i in range(sizeGraph)}
 f = open("data/boat.txt", "r", encoding="utf8")
@@ -83,7 +83,7 @@ def min_shortest_path(state, node):
     dist += 1
   return dist
 
-def mrXmove(state):
+def mrXmove1(state):
   max_dist = 0
   best = 0
   actions = dest(state[1])
@@ -92,6 +92,17 @@ def mrXmove(state):
     if max_dist < dist:
       best = act
       max_dist = dist
+  return best
+
+def mrXmove2(state):
+  best = 0
+  maxSize = 0
+  actions = dest(state[1])
+  for act in actions:
+    size = len(propagate_prob(state, transportFor(state[1], act)))
+    if maxSize < size:
+      best = act
+      maxSize = size
   return best
 
 def run():
@@ -110,7 +121,7 @@ def run():
   found = False
   while turn < maxTurns and not found:
     turn += 1
-    mrX = mrXmove(state)
+    mrX = mrXmove1(state)
     move = transportFor(state[1], mrX)
     state[1] = mrX
     if turn in reveals:
