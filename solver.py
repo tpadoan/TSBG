@@ -36,7 +36,10 @@ for p in range(1, sizeGraph+1):
   dest[p] = cart[p]+tram[p]+boat[p]
 
 def moves(sub_turn, pos):
-  return [p for p in dest[pos[sub_turn]] if p not in pos[1:]]
+  if sub_turn>0:
+    return [p for p in dest[pos[sub_turn]] if p not in pos[1:]]
+  else:
+    return dest[pos[sub_turn]]
 
 def succ(turn, sub_turn, pos):
   if pos[0] in pos[1:]:
@@ -60,21 +63,19 @@ for h in range(1, sizeGraph+1):
     for j in range(1, sizeGraph+1):
       for k in range(1, sizeGraph+1):
         if i!=j!=k!=i:
-          for t in range(maxTurns+1):
-            if t==maxTurns:
+          if h==i or h==j or h==k:
+            V[maxTurns][0][(h,i,j,k)] = (1,maxTurns)
+          else:
+            V[maxTurns][0][(h,i,j,k)] = (0,maxTurns)
+          for t in range(maxTurns):
+            for s in range(numDetectives+1):
               if h==i or h==j or h==k:
-                V[t][0][(h,i,j,k)] = 1
+                V[t][s][(h,i,j,k)] = (1,t)
               else:
-                V[t][0][(h,i,j,k)] = 0
-            else:
-              for s in range(numDetectives+1):
-                if h==i or h==j or h==k:
-                  V[t][s][(h,i,j,k)] = 1
+                if moves(s, (h,i,j,k)):
+                  V[t][s][(h,i,j,k)] = (-1,t) if s>0 else (2,t)
                 else:
-                  if moves(s, (h,i,j,k)):
-                    V[t][s][(h,i,j,k)] = -1 if s>0 else 2
-                  else:
-                    V[t][s][(h,i,j,k)] = 0 if s>0 else 1
+                  V[t][s][(h,i,j,k)] = (0,t)
 
 for t in range(maxTurns-1, -1, -1):
   for s in range(numDetectives, -1, -1):
@@ -85,19 +86,16 @@ for t in range(maxTurns-1, -1, -1):
             if i!=j!=k!=i:
               for nt,ns,m in succ(t,s,(h,i,j,k)):
                 if s>0:
-                  if h==m[s] or V[nt][ns][m] > V[t][s][(h,i,j,k)]:
+                  if V[nt][ns][m][0]>V[t][s][(h,i,j,k)][0] or (V[nt][ns][m][0]==1 and V[nt][ns][m][1]<V[t][s][(h,i,j,k)][1]):
                     V[t][s][(h,i,j,k)] = V[nt][ns][m]
                     P[t][s][(h,i,j,k)] = m[s]
                 else:
-                  if V[nt][ns][m] < V[t][s][(h,i,j,k)]:
+                  if V[nt][ns][m][0]<V[t][s][(h,i,j,k)][0] or (V[nt][ns][m][0]==V[t][s][(h,i,j,k)][0] and V[nt][ns][m][1]>V[t][s][(h,i,j,k)][1]):
                     V[t][s][(h,i,j,k)] = V[nt][ns][m]
                     P[t][s][(h,i,j,k)] = m[s]
 
-# stores value function V and optimal policy P on files
-pickle.dump(V, open("models/Val", "wb"))
+# stores the optimal policy P on file Pi
 pickle.dump(P, open("models/Pi", "wb"))
 
 # to load value function V and optimal policy P from files, do:
-# V = pickle.load(open("Val", "rb"))
-# P = pickle.load(open("Pi", "rb"))
-
+# P = pickle.load(open("models/Pi", "rb"))
