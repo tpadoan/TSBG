@@ -1,12 +1,11 @@
 import pickle
 from numpy.random import choice
+import logic
 
 # size of graph
 sizeGraph = 21
 # maximum number of turns to catch mr.X
 maxTurns = 10
-# turns when mr.X location is revealed to the detectives
-reveals = [] # [i+1 for i in range(maxTurns)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
@@ -38,8 +37,6 @@ for s in content.split('\n'):
   l = s.split(' ')
   cart[int(l[0])] = [int(p) for p in l[1:]]
 
-P = pickle.load(open("models/Pi", "rb"))
-
 def dest(source):
   return boat[source] + tram[source] + cart[source]
 
@@ -50,28 +47,17 @@ def transportFor(source, target):
     return 'tram'
   return 'cart'
 
-def propagate_prob(state, move):
-  new = {}
-  tot = 0
-  for node,prob in state[2].items():
-    transport = None
-    if move=='cart':
-      transport = cart
-    elif move=='tram':
-      transport = tram
-    else:
-      transport = boat
-    succ = [d for d in transport[node] if d not in state[0]]
-    size = len(succ)
-    for s in succ:
-      p = prob/size
-      if s in new:
-        new[s] += p
-      else:
-        new[s] = p
-      tot += p
-  for node,prob in new.items():
-    new[node] = prob/tot
+def propagate(state, move):
+  new = set()
+  transport = None
+  if move=='cart':
+    transport = cart
+  elif move=='tram':
+    transport = tram
+  else:
+    transport = boat
+  for node in state[2]:
+    new = new.union([d for d in transport[node] if d not in state[0]])
   return new
 
 def min_shortest_path(state, node):
@@ -99,7 +85,7 @@ def mrXmove2(state):
   maxSize = -1
   actions = dest(state[1])
   for act in actions:
-    size = len(propagate_prob(state, transportFor(state[1], act)))
+    size = len(propagate(state, transportFor(state[1], act)))
     if maxSize < size:
       best = act
       maxSize = size
@@ -111,21 +97,13 @@ def mrXmove(state):
   actions = dest(state[1])
   for act in actions:
     dist = min_shortest_path(state, act)
-    size = len(propagate_prob(state, transportFor(state[1], act)))
+    size = len(propagate(state, transportFor(state[1], act)))
     if maxDistSize < dist*size:
       best = act
       maxSize = dist*size
   return best
 
-def cannotMove(state, det):
-  flag = True
-  for m in dest(state[0][det]):
-    if m not in state[0]:
-      flag = False
-  return flag
-
-
-def run():
+def run(G):
   mrX = None
   police = None
   if fixed and numDetectives<4:
@@ -135,7 +113,8 @@ def run():
     starts = choice(list(range(1, sizeGraph+1)), size=numDetectives+1, replace=False)
     mrX = starts[0]
     police = starts[1:]
-  state = [police, mrX, {mrX:1.0}]
+  G.initGame(police, mrX)
+  state = [police, mrX, {mrX}]
   turn = 0
   stop = False
   found = False
@@ -144,34 +123,24 @@ def run():
     mrX = mrXmove(state)
     move = transportFor(state[1], mrX)
     state[1] = mrX
-    if turn in reveals:
-      state[2] = {state[1]:1.0}
-    else:
-      state[2] = propagate_prob(state, move)
+    state[2] = propagate(state, move)
     if state[1] in state[0]:
       found = True
       break
-    for i in range(numDetectives):
-      if cannotMove(state, i):
-        stop = True
-        break
-      x = choice(list(state[2].keys()), p=list(state[2].values()))
-      state[0][i] = P[turn-1][i+1][tuple((state[0][k-1] if k>0 else x for k in range(numDetectives+1)))]
-      diff = state[2].pop(state[0][i], False)
-      if diff:
-        tot = 1.0 - diff
-        for node,prob in state[2].items():
-          state[2][node] = prob/tot
-      if state[1] in state[0]:
-        found = True
-        break
+    state[0] = G.playTurn(move)
+    if not len(state[0]):
+      stop = True
+    if state[1] in state[0]:
+      found = True
   return found
 
 
-wins = 0
-print(f"Testing {numTests} runs")
-print("Run\tD_wins\tX_wins")
-for count in range(numTests):
-  if run():
-    wins += 1
-  print(f"{1+count}\t{wins}\t{1+count-wins}")
+if __name__ == '__main__':
+  G = logic.game()
+  wins = 0
+  print(f"Testing {numTests} runs")
+  print("Run\tD_wins\tX_wins")
+  for count in range(numTests):
+    if run(G):
+      wins += 1
+    print(f"{1+count}\t{wins}\t{1+count-wins}")
