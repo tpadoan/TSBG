@@ -17,7 +17,7 @@ movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [i+1 for i in range(maxTurns)]
+reveals = [i for i in range(1, maxTurns+1, 3)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
@@ -36,7 +36,7 @@ for s in content.split('\n'):
 im = plt.imread('data/graph.png')
 plt.ion()
 
-def drawMap(state, sub_turn):
+def drawMap(state, player_name):
   plt.clf()
   plt.imshow(im)
   plt.axis('off')
@@ -54,7 +54,7 @@ def drawMap(state, sub_turn):
   plt.plot(X, Y, 'D', ms=11, color='blue', mec='cyan')
   if state[1]:
     plt.plot(coords[state[1]][0], coords[state[1]][1], '*', ms=10, color='none', mec='gold')
-  plt.title(f'Player {sub_turn} is currently playing')
+  plt.title(f'{player_name} is currently playing')
   plt.show()
 
 boat = {(i+1):[] for i in range(sizeGraph)}
@@ -124,8 +124,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
 
 max_turns = 10
-detectives_model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_smartMRX_randomStartEachEpisode")
-env_SY = ScotlandYard(random_start=True, num_detectives=3, max_turns=max_turns)
+detectives_model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_{numDetectives}detectives_smartMRX_randomStartEachEpisode")
+env_SY = ScotlandYard(random_start=True, num_detectives=numDetectives, max_turns=max_turns)
 env = ActionMasker(env_SY, mask_fn)
 detectives_model.set_env(env)
 # for i in range(numDetectives):
@@ -139,7 +139,7 @@ mrX = env.starting_nodes[0]
 #   mrX = int((input('Mr.X initial location:\t')).strip())
 tlog = [[0,0,0]]*maxTurns
 state = [env.starting_nodes[1:], mrX, tlog, {mrX}]
-drawMap(state, None)
+drawMap(state, "Omo Vespa")
 
 turn = 0
 found = False
@@ -151,6 +151,8 @@ while turn < maxTurns and not found:
   # move = input('Mr.X moves by:\t').strip()
   # while move not in movesNames:
     # move = input('input error, try again:\t').strip()
+  drawMap(state, "Omo Vespa")
+  plt.pause(2)
   mrX = input('mr.X moves secretly to:\t').strip()
   while (not mrX.isdigit()) or (int(mrX) not in dest(state[1])):
     mrX = input('input error, try again:\t').strip()
@@ -163,24 +165,25 @@ while turn < maxTurns and not found:
     state[3] = {state[1]}
   else:
     state[3] = propagate(state, move)
-  drawMap(state, 0)
+  drawMap(state, "Omo Vespa")
+  plt.pause(2)
   if state[1] in state[0]:
     found = True
 
   env_SY.turn_sub_counter += 1
   for i in range(numDetectives):
       # for i in range(numDetectives):
-    observation = nodes_ohe(state[3]) # + [1 if j==i else 0 for j in range(numDetectives)]
+    observation = nodes_ohe(state[3]) if turn in reveals else nodes_ohe({-1}) # + [1 if j==i else 0 for j in range(numDetectives)]
     for ohe in [node_ohe(state[0][j]) for j in range(numDetectives)]:
       observation.extend(ohe)
     action_masks = get_action_masks(env)
     action, _ = detectives_model.predict(observation, action_masks=action_masks)
     obs, reward, done, truncated, info = env.step(action)
-    drawMap(state, i+1)
+    drawMap(state, f"Detective {i+1}")
     plt.pause(2)
     state[0][i] = action+1
     state[3].discard(state[0][i])
-    drawMap(state, i+1)
+    drawMap(state, f"Detective {i+1}")
     plt.pause(2)
     if state[1] in state[0]:
       found = True

@@ -29,12 +29,13 @@ class ScotlandYard(gym.Env):
 
         # State space description
         # The state will be the one hot encoding of mrX position followed by the i-th detective position
-        self.observation_space = MultiDiscrete([2] * 4*self.G.number_of_nodes())
+        self.observation_space = MultiDiscrete([2] * (num_detectives+1)*self.G.number_of_nodes())
 
         self.state = np.array([utils.graph_util.node_one_hot_encoding(node_id=node, num_nodes=self.G.number_of_nodes()) for node in self.starting_nodes]).flatten()
 
         self.turn_number = 0
         self.turn_sub_counter = 0
+        self.reveals = [3, 7]
 
         self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([self.starting_nodes[0]])
@@ -192,7 +193,7 @@ class ScotlandYard(gym.Env):
             np.ndarray[int]: The current observation of mrX.
         """
         # Add mrX current position
-        observation = utils.graph_util.node_one_hot_encoding(node_id = self.mrX[0], num_nodes = self.G.number_of_nodes())
+        observation = utils.graph_util.node_one_hot_encoding(node_id = self.mrX[0] if self.turn_number in self.reveals else -1, num_nodes = self.G.number_of_nodes())
         # Add each detective current position
         for i in range(len(self.detectives)):
             observation.extend(utils.graph_util.node_one_hot_encoding(node_id = self.detectives[i][0], num_nodes = self.G.number_of_nodes()))
@@ -205,8 +206,8 @@ class ScotlandYard(gym.Env):
         Returns:
             np.ndarray[int]: The current observation of the detectives.
         """
-       # Add mrX current position
-        observation = utils.graph_util.node_one_hot_encoding(node_id = self.mrX[0], num_nodes = self.G.number_of_nodes())
+       # Add mrX current position only during revealing turns
+        observation = utils.graph_util.node_one_hot_encoding(node_id = self.mrX[0] if self.turn_number in self.reveals else -1, num_nodes = self.G.number_of_nodes())
         # Add each detective current position
         for i in range(len(self.detectives)):
             observation.extend(utils.graph_util.node_one_hot_encoding(node_id = self.detectives[i][0], num_nodes = self.G.number_of_nodes()))
@@ -277,9 +278,11 @@ if __name__ == "__main__":
     env = ActionMasker(env, mask_fn)
 
     # model = MaskablePPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=30)
-    # # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
-    # # # model = DQN("MlpPolicy", env, verbose=1)
-    # # # # print("Policy results before training")
+    # model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
+    # model.set_env(env)
+    # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
+    # # model = DQN("MlpPolicy", env, verbose=1)
+    # # # print("Policy results before training")
     # # # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
     # timesteps = 5000
     # for i in range(30):
@@ -287,13 +290,13 @@ if __name__ == "__main__":
     # # # #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO")
     # # # #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO", callback=eval_callback)
     # # #     # print(f"WITH deepcopy took: {time.time()-start}s to learn in 5000 steps")
-    # model.save(f"Masked_PPO_SY_150k_{max_turns}turns_smartMRX_randomStartEachEpisode")
-    # model.save(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+    # model.save(f"Masked_PPO_SY_POMDP_300k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
+    # # model.save(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
 
-    model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+    model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
     # model = PPO.load(f"PPO_SY_50k_{max_turns}turns_smartMRX_randomStartEachEpisode")
     # model = DQN.load(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
-    model.set_env(env)
+    # model.set_env(env)
 
     countD = 0
     countX = 0
