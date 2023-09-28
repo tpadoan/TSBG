@@ -7,11 +7,11 @@ sizeGraph = 21
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [5] # [i+1 for i in range(maxTurns)]
+reveals =  [] # [i+1 for i in range(maxTurns)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
-fixed = True
+fixed = False
 # list of names of moves, same order as in graph utils
 movesNames = ['boat', 'tram', 'cart']
 
@@ -111,7 +111,7 @@ police = None
 if fixed and numDetectives<4:
   police = [20-7*i for i in range(numDetectives)]
 else:
-  police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
+  police = choice(list(range(1, sizeGraph+1)), size=numDetectives, replace=False)
 drawMap([police,0,{}])
 
 mrX = None

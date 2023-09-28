@@ -6,11 +6,11 @@ sizeGraph = 21
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [5] # [i+1 for i in range(maxTurns)]
+reveals = [] # [i+1 for i in range(maxTurns)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
-fixed = True
+fixed = False
 # number of tests
 numTests = 1000
 
@@ -84,19 +84,19 @@ def min_shortest_path(state, node):
   return dist
 
 def mrXmove1(state):
-  max_dist = 0
   best = 0
+  maxDist = -1
   actions = dest(state[1])
   for act in actions:
     dist = min_shortest_path(state, act)
-    if max_dist < dist:
+    if maxDist < dist:
       best = act
-      max_dist = dist
+      maxDist = dist
   return best
 
 def mrXmove2(state):
   best = 0
-  maxSize = 0
+  maxSize = -1
   actions = dest(state[1])
   for act in actions:
     size = len(propagate_prob(state, transportFor(state[1], act)))
@@ -105,23 +105,43 @@ def mrXmove2(state):
       maxSize = size
   return best
 
+def mrXmove(state):
+  best = 0
+  maxDistSize = -1
+  actions = dest(state[1])
+  for act in actions:
+    dist = min_shortest_path(state, act)
+    size = len(propagate_prob(state, transportFor(state[1], act)))
+    if maxDistSize < dist*size:
+      best = act
+      maxSize = dist*size
+  return best
+
+def cannotMove(state, det):
+  flag = True
+  for m in dest(state[0][det]):
+    if m not in state[0]:
+      flag = False
+  return flag
+
+
 def run():
+  mrX = None
   police = None
   if fixed and numDetectives<4:
+    mrX = 5
     police = [20-7*i for i in range(numDetectives)]
   else:
-    police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
-  mrX = None
-  if fixed and numDetectives<4:
-    mrX = 5
-  else:
-    mrX = int((input('Mr.X initial location:\t')).strip())
+    starts = choice(list(range(1, sizeGraph+1)), size=numDetectives+1, replace=False)
+    mrX = starts[0]
+    police = starts[1:]
   state = [police, mrX, {mrX:1.0}]
   turn = 0
+  stop = False
   found = False
-  while turn < maxTurns and not found:
+  while turn < maxTurns and not found and not stop:
     turn += 1
-    mrX = mrXmove1(state)
+    mrX = mrXmove(state)
     move = transportFor(state[1], mrX)
     state[1] = mrX
     if turn in reveals:
@@ -132,6 +152,9 @@ def run():
       found = True
       break
     for i in range(numDetectives):
+      if cannotMove(state, i):
+        stop = True
+        break
       x = choice(list(state[2].keys()), p=list(state[2].values()))
       state[0][i] = P[turn-1][i+1][tuple((state[0][k-1] if k>0 else x for k in range(numDetectives+1)))]
       diff = state[2].pop(state[0][i], False)
