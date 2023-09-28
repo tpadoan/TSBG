@@ -91,7 +91,7 @@ def mrXmove2(state):
       maxSize = size
   return best
 
-def mrXmove(state):
+def mrXmove3(state):
   best = 0
   maxDistSize = -1
   actions = dest(state[1])
@@ -110,9 +110,15 @@ def run(G):
     mrX = 5
     police = [20-7*i for i in range(numDetectives)]
   else:
-    starts = choice(list(range(1, sizeGraph+1)), size=numDetectives+1, replace=False)
-    mrX = starts[0]
-    police = starts[1:]
+    police = choice(list(range(1, sizeGraph+1)), size=numDetectives, replace=False)
+    mrX = 0
+    maxDist = -1
+    starts = [i for i in range(1,22)]
+    for pos in starts:
+      dist = min_shortest_path([police], pos)
+      if maxDist < dist:
+        mrX = pos
+        maxDist = dist
   G.initGame(police, mrX)
   state = [police, mrX, {mrX}]
   turn = 0
@@ -120,7 +126,7 @@ def run(G):
   found = False
   while turn < maxTurns and not found and not stop:
     turn += 1
-    mrX = mrXmove(state)
+    mrX = mrXmove1(state)
     move = transportFor(state[1], mrX)
     state[1] = mrX
     state[2] = propagate(state, move)
@@ -128,6 +134,7 @@ def run(G):
       found = True
       break
     state[0] = G.playTurn(move)
+    state[2] = state[2].difference(state[0])
     if not len(state[0]):
       stop = True
     if state[1] in state[0]:
