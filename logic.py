@@ -29,7 +29,10 @@ class game:
     self.Pi = pickle.load(open("models/Pi", "rb"))
 
   def initGame(self, detectives: list[int], mrX: int):
-    self.state = [detectives[:], {mrX:1.0}]
+    if not mrX:
+      self.state = [detectives[:], {i:1.0/21.0 for i in range(1,22)}]
+    else:
+      self.state = [detectives[:], {mrX:1.0}]
     self.turn = 0
 
   def dest(self, source: int):
