@@ -35,7 +35,7 @@ class ScotlandYard(gym.Env):
 
         self.turn_number = 0
         self.turn_sub_counter = 0
-        self.reveals = [3, 7]
+        self.reveals = [i for i in range(1, max_turns, 3)]
 
         self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([self.starting_nodes[0]])
@@ -99,7 +99,12 @@ class ScotlandYard(gym.Env):
 
             return self.state, self.reward, self.done, False, {}
 
-    def valid_action_mask(self):
+    def valid_action_mask(self) -> np.ndarray[int]:
+        """ Generate the masked array for actions to be used at each sub turn.
+
+        Returns:
+            np.ndarray[int]: The masked actions array.
+        """
         valid_moves = self.get_valid_moves()
         valid_dst = [move[1] for move in valid_moves]
         action_masks = np.zeros((self.G.number_of_nodes(),))
@@ -214,7 +219,15 @@ class ScotlandYard(gym.Env):
 
         return np.array(observation)
 
-    def shortest_path(self, det_id):
+    def shortest_path(self, det_id: int) -> int:
+        """ Compute the shortest path length between the det_id detective and mrX.
+
+        Args:
+            det_id (int): The detective id.
+
+        Returns:
+            int: The resulting number of hops.
+        """
         return nx.shortest_path_length(self.G, self.detectives[det_id][0], self.mrX[0])
 
     def min_shortest_path(self, node):
@@ -278,29 +291,29 @@ if __name__ == "__main__":
     env = ActionMasker(env, mask_fn)
 
     # model = MaskablePPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=30)
-    # model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
+    # model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_POMDP_300k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
     # model.set_env(env)
-    # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
-    # # model = DQN("MlpPolicy", env, verbose=1)
-    # # # print("Policy results before training")
-    # # # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
+    # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
+    # model = DQN("MlpPolicy", env, verbose=1)
+    # # print("Policy results before training")
+    # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
     # timesteps = 5000
     # for i in range(30):
     #     model.learn(total_timesteps=timesteps, reset_num_timesteps = False)
-    # # # #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO")
-    # # # #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO", callback=eval_callback)
-    # # #     # print(f"WITH deepcopy took: {time.time()-start}s to learn in 5000 steps")
-    # model.save(f"Masked_PPO_SY_POMDP_300k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
+        # # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO")
+        # # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO", callback=eval_callback)
+        # print(f"WITH deepcopy took: {time.time()-start}s to learn in 5000 steps")
+    # model.save(f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
     # # model.save(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
 
-    model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
+    model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
     # model = PPO.load(f"PPO_SY_50k_{max_turns}turns_smartMRX_randomStartEachEpisode")
     # model = DQN.load(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
     # model.set_env(env)
 
     countD = 0
     countX = 0
-    num_tests = 100
+    num_tests = 1000
 
     str1 = ""
     print(f"Testing on {num_tests} runs")
