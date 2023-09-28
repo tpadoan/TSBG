@@ -17,7 +17,7 @@ movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [i for i in range(1, maxTurns+1, 3)]
+reveals = [1]+[i for i in range(2, maxTurns+1, 3)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
@@ -124,7 +124,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
 
 max_turns = 10
-detectives_model = MaskablePPO.load(f"Masked_PPO_SY_150k_{max_turns}turns_{numDetectives}detectives_smartMRX_randomStartEachEpisode")
+detectives_model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{numDetectives}detectives_smartMRX_randomStartEachEpisode")
 env_SY = ScotlandYard(random_start=True, num_detectives=numDetectives, max_turns=max_turns)
 env = ActionMasker(env_SY, mask_fn)
 detectives_model.set_env(env)
@@ -146,6 +146,8 @@ found = False
 while turn < maxTurns and not found:
   turn += 1
   print('\nTURN ' + str(turn))
+  if turn in reveals:
+    print('Mr.X location will be revealed!')
   # if input('Type anything if found..\t').strip():
     # found = True
   # move = input('Mr.X moves by:\t').strip()
