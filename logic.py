@@ -1,7 +1,7 @@
 import pickle
 from numpy.random import choice
 
-class game:
+class Game:
   def __init__(self):
     sizeGraph = 21
     self.numDetectives = 3
