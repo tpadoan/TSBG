@@ -174,10 +174,10 @@ class ScotlandYardGUI:
         self.window['-PRE_GRAPH-'].draw_image(data=self.map_data, location=(0, self.map_height))
         self.window['-GAME_GRAPH-'].draw_image(data=self.map_data, location=(0, self.map_height))
         for idx,x in enumerate(detective_loc):
-            self.window['-PRE_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color='yellow', line_color='black', line_width=1)
-            self.window['-PRE_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
-            self.window['-GAME_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color='yellow', line_color='black', line_width=1)
-            self.window['-GAME_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
+            self.window['-PRE_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color=None, line_color='yellow', line_width=4)
+            #self.window['-PRE_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
+            self.window['-GAME_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color=None, line_color='yellow', line_width=4)
+            #self.window['-GAME_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
         self.detective_starting_loc=detective_loc
 
     def update_detective(self, detective_loc):
@@ -195,8 +195,8 @@ class ScotlandYardGUI:
         self.window['-D3_PATH-'].update(prev + ' --> ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
         self.window['-GAME_GRAPH-'].draw_image(data=self.map_data, location=(0, self.map_height))
         for idx,x in enumerate(detective_loc):
-            self.window['-GAME_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color='yellow', line_color='black', line_width=1)
-            self.window['-GAME_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
+            self.window['-GAME_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color=None, line_color='yellow', line_width=4)
+            #self.window['-GAME_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
 
     def update_marco_path(self, move):
         if move=='cart':
