@@ -14,8 +14,8 @@ class ScotlandYardGUI:
         self.detective_starting_loc = None
 
     def create_window(self):
-        window_width = int(self.screen_width * 0.7)
-        window_height = int(self.screen_height * 0.4)
+        window_width = int(self.screen_width * 0.8)
+        window_height = int(self.screen_height * 0.8)
 
         marco_img = Image.open('./img/marco.gif')
         alpha_marco = marco_img.size[0]/marco_img.size[1]
