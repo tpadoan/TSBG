@@ -212,15 +212,16 @@ class ScotlandYardGUI:
 
     def update_counter(self, counter):
         if counter > 10:
-          self.window['-COUNTER-'].update('Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
+            self.window['-COUNTER-'].update('Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
         else:
-          self.window['-COUNTER-'].update('Turno ' + str(counter))
+            self.window['-COUNTER-'].update('Turno ' + str(counter))
 
     def restart_layout(self, win):
         if win:
             self.window['-WIN_LAYOUT-'].update(visible=False)
         else:
             self.window['-LOSE_LAYOUT-'].update(visible=False)
+        self.window['-COUNTER-'].update('Turno 1')
         self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
 
 if __name__ == "__main__":
