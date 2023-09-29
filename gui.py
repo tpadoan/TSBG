@@ -107,8 +107,8 @@ class ScotlandYardGUI:
         self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
 
     def switch_to_game_layout(self, marco_starting_pos):
-        self.window['-MARCO_LOCATION_TXT-'].update('Posizione iniziale di Marco: '+ str(marco_starting_pos))
-        self.window['-M_PATH-'].update('Percorso di Marco: '+ str(marco_starting_pos))
+        self.window['-MARCO_LOCATION_TXT-'].update('Posizione iniziale di Marco:  '+ str(marco_starting_pos))
+        self.window['-M_PATH-'].update('Percorso di Marco:  '+ str(marco_starting_pos))
         self.window['-PRE_GAME_LAYOUT-'].update(visible=False)
         self.window['-GAME_LAYOUT-'].update(visible=True)
 
@@ -121,15 +121,15 @@ class ScotlandYardGUI:
             self.window['-LOSE_LAYOUT-'].update(visible=True)
 
     def set_detective_starting_loc(self, detective_loc):
-        self.window['-D1_START_LOCATION-'].update('Guardiano A: '+ str(detective_loc[0]))
-        self.window['-D2_START_LOCATION-'].update('Guardiano B: '+ str(detective_loc[1]))
-        self.window['-D3_START_LOCATION-'].update('Guardiano C: '+ str(detective_loc[2]))
-        self.window['-D1_LOCATION-'].update('Guardiano A: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Guardiano B: '+ str(detective_loc[1]))  
-        self.window['-D3_LOCATION-'].update('Guardiano C: '+ str(detective_loc[2]))
-        self.window['-D1_PATH-'].update('Percorso del Guardiano A: ' + str(detective_loc[0]))
-        self.window['-D2_PATH-'].update('Percorso del Guardiano B: ' + str(detective_loc[1]))
-        self.window['-D3_PATH-'].update('Percorso del Guardiano C: ' + str(detective_loc[2]))
+        self.window['-D1_START_LOCATION-'].update('Guardiano A:  '+ str(detective_loc[0]))
+        self.window['-D2_START_LOCATION-'].update('Guardiano B:  '+ str(detective_loc[1]))
+        self.window['-D3_START_LOCATION-'].update('Guardiano C:  '+ str(detective_loc[2]))
+        self.window['-D1_LOCATION-'].update('Guardiano A:  '+ str(detective_loc[0]))
+        self.window['-D2_LOCATION-'].update('Guardiano B:  '+ str(detective_loc[1]))  
+        self.window['-D3_LOCATION-'].update('Guardiano C:  '+ str(detective_loc[2]))
+        self.window['-D1_PATH-'].update('Percorso del Guardiano A:  ' + str(detective_loc[0]))
+        self.window['-D2_PATH-'].update('Percorso del Guardiano B:  ' + str(detective_loc[1]))
+        self.window['-D3_PATH-'].update('Percorso del Guardiano C:  ' + str(detective_loc[2]))
         self.detective_starting_loc=detective_loc
 
     def update_detective(self, detective_loc):
