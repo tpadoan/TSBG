@@ -58,7 +58,7 @@ class ScotlandYardGUI:
         ]
 
         game_layout = [
-            [sg.Image(key='-MAPPA-', size=img_size_mappa), sg.Text("Turn 1", key='-COUNTER-', font='Tahoma 13 bold', justification='right', size=(10,1))],
+            [sg.Image(key='-MAPPA-', size=img_size_mappa), sg.Text("Turno 1", key='-COUNTER-', font='Tahoma 13 bold', justification='left', size=(25,3))],
             [sg.Text('', font='Tahoma 13 bold',  key='-D1_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold', key='-D2_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold', key='-D3_LOCATION-')],
@@ -72,7 +72,7 @@ class ScotlandYardGUI:
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
 
         win_layout = [
-            [sg.Text(win_txt, size=(img_size_marco[0], 4), font='Tahoma 13 bold',  key='-WIN_DESCRIPTION-')],
+            [sg.Text(win_txt, size=(img_size_marco[0], 3), font='Tahoma 13 bold',  key='-WIN_DESCRIPTION-')],
             [sg.Image(key='-WIN_IMG-', size = img_size_win)],
             [sg.Button("Ricomincia", key='-WIN_RESTART-', font='Tahoma 13 bold', size=(20, 5))]
         ]
@@ -121,45 +121,48 @@ class ScotlandYardGUI:
             self.window['-LOSE_LAYOUT-'].update(visible=True)
 
     def set_detective_starting_loc(self, detective_loc):
-        self.window['-D1_START_LOCATION-'].update('Guardiano A:  '+ str(detective_loc[0]))
-        self.window['-D2_START_LOCATION-'].update('Guardiano B:  '+ str(detective_loc[1]))
-        self.window['-D3_START_LOCATION-'].update('Guardiano C:  '+ str(detective_loc[2]))
-        self.window['-D1_LOCATION-'].update('Guardiano A:  '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Guardiano B:  '+ str(detective_loc[1]))  
-        self.window['-D3_LOCATION-'].update('Guardiano C:  '+ str(detective_loc[2]))
-        self.window['-D1_PATH-'].update('Percorso del Guardiano A:  ' + str(detective_loc[0]))
-        self.window['-D2_PATH-'].update('Percorso del Guardiano B:  ' + str(detective_loc[1]))
-        self.window['-D3_PATH-'].update('Percorso del Guardiano C:  ' + str(detective_loc[2]))
+        self.window['-D1_START_LOCATION-'].update('Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
+        self.window['-D2_START_LOCATION-'].update('Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
+        self.window['-D3_START_LOCATION-'].update('Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        self.window['-D1_LOCATION-'].update('Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
+        self.window['-D2_LOCATION-'].update('Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
+        self.window['-D3_LOCATION-'].update('Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        self.window['-D1_PATH-'].update('Percorso del Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
+        self.window['-D2_PATH-'].update('Percorso del Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
+        self.window['-D3_PATH-'].update('Percorso del Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
         self.detective_starting_loc=detective_loc
 
     def update_detective(self, detective_loc):
         prev = self.window['-D1_LOCATION-'].get()
-        self.window['-D1_LOCATION-'].update(prev + ' --> ' + str(detective_loc[0]))
+        self.window['-D1_LOCATION-'].update(prev + ' --> ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
         prev = self.window['-D1_PATH-'].get()
-        self.window['-D1_PATH-'].update(prev + ' --> ' + str(detective_loc[0]))
+        self.window['-D1_PATH-'].update(prev + ' --> ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
         prev = self.window['-D2_LOCATION-'].get()
-        self.window['-D2_LOCATION-'].update(prev + ' --> ' + str(detective_loc[1]))
+        self.window['-D2_LOCATION-'].update(prev + ' --> ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
         prev = self.window['-D2_PATH-'].get()
-        self.window['-D2_PATH-'].update(prev + ' --> ' + str(detective_loc[1]))
+        self.window['-D2_PATH-'].update(prev + ' --> ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
         prev = self.window['-D3_LOCATION-'].get()
-        self.window['-D3_LOCATION-'].update(prev + ' --> ' + str(detective_loc[2]))
+        self.window['-D3_LOCATION-'].update(prev + ' --> ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
         prev = self.window['-D3_PATH-'].get()
-        self.window['-D3_PATH-'].update(prev + ' --> ' + str(detective_loc[2]))
+        self.window['-D3_PATH-'].update(prev + ' --> ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
 
     def update_marco_path(self, move):
         if move=='cart':
-            transport = 'bicicletta'
+            transport = 'bici'
         elif move=='tram':
-            transport = 'autobus'
+            transport = 'bus'
         else:
-            transport = 'traghetto'
+            transport = 'nave'
         prev = self.window['-MARCO_LOCATION_TXT-'].get()
         self.window['-MARCO_LOCATION_TXT-'].update(prev + ' -- ' + transport)
         prev = self.window['-M_PATH-'].get()
         self.window['-M_PATH-'].update(prev + ' -- ' + transport)
 
     def update_counter(self, counter):
-        self.window['-COUNTER-'].update('Turn ' + str(counter))
+        if counter > 10:
+          self.window['-COUNTER-'].update('Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
+        else:
+          self.window['-COUNTER-'].update('Turno ' + str(counter))
 
     def restart_layout(self, win):
         if win:
@@ -201,15 +204,16 @@ if __name__ == "__main__":
         elif event in ['-BICI-', '-BUS-', '-DELFINO-']:
             if counter > 9:
                 game_gui.switch_to_endgame(user_win=True)
-            move = event2move_dict[event]
-            game_gui.update_marco_path(move)
-            new_detective_loc = game.playTurn(move)
-            if new_detective_loc:
-                game_gui.update_detective(new_detective_loc)
-                counter += 1
-                game_gui.update_counter(counter=counter+1)
             else:
-                game_gui.switch_to_endgame(user_win=False)
+                move = event2move_dict[event]
+                game_gui.update_marco_path(move)
+                new_detective_loc = game.playTurn(move)
+                if new_detective_loc:
+                    game_gui.update_detective(new_detective_loc)
+                    counter += 1
+                    game_gui.update_counter(counter+1)
+                else:
+                    game_gui.switch_to_endgame(user_win=False)
 
         elif event == '-CATTURATO-':
             game_gui.switch_to_endgame(user_win=False)
