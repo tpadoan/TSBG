@@ -36,6 +36,7 @@ class ScotlandYard(gym.Env):
         self.turn_number = 0
         self.turn_sub_counter = 0
         self.reveals = [i for i in range(1, max_turns, 3)]
+        # self.reveals = [1, 7]
 
         self.detectives = np.array([[0] for _ in range(num_detectives)])
         self.mrX = np.array([self.starting_nodes[0]])
@@ -282,7 +283,6 @@ def mask_fn(env: ScotlandYard) -> np.ndarray:
 if __name__ == "__main__":
 
     random_start = True
-    num_episodes = 20000
     num_detectives = 3
     num_nodes = 21
     max_turns = 10
