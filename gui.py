@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 from PIL import Image, ImageTk
 import random
-import sys
+from io import BytesIO
 from logic import Game
 
 class ScotlandYardGUI:
@@ -10,6 +10,34 @@ class ScotlandYardGUI:
         self.screen_width, self.screen_height = sg.Window.get_screen_size()
         self.marco_last_loc = None
         self.detective_starting_loc = None
+        self.w_factor = self.screen_width / 2560
+        self.h_factor = self.screen_height / 1440
+        self.loc_list=[
+                    (225, 100), 
+                    (310, 190), 
+                    (412, 205), 
+                    (515, 295), 
+                    (555, 425), 
+                    (505, 130), 
+                    (650, 285), 
+                    (675, 457), 
+                    (563, 530), 
+                    (435, 733), 
+                    (635, 80), 
+                    (730, 335), 
+                    (735, 580), 
+                    (800, 205), 
+                    (825, 298), 
+                    (875, 487), 
+                    (710, 737),
+                    (850, 60),
+                    (940, 220),
+                    (1015, 550),
+                    (940, 675)
+        ]
+        for i in range(len(self.loc_list)):
+          self.loc_list[i] = (int(self.w_factor*self.loc_list[i][0]), int(self.h_factor*self.loc_list[i][1]))
+        self.det_name=['A', 'B', 'C']
 
     def create_window(self):
         window_width = int(self.screen_width * 0.8)
@@ -36,9 +64,12 @@ class ScotlandYardGUI:
         lose_img = lose_img.resize(img_size_lose)
 
         marco_img_data = ImageTk.PhotoImage(marco_img)
-        mappa_img_data = ImageTk.PhotoImage(mappa_img)
         win_img_data = ImageTk.PhotoImage(win_img)
         lose_img_data = ImageTk.PhotoImage(lose_img)
+        #mappa_img_data = ImageTk.PhotoImage(mappa_img)
+        with BytesIO() as output:
+            mappa_img.save(output, format="PNG")
+            mappa_img_data = output.getvalue()
 
         start_txt ="Il pinguino Marco deve scappare dai dipendenti dell'acquario di Trieste\nper ottenere pesce extra dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
         initial_layout = [
@@ -48,7 +79,12 @@ class ScotlandYardGUI:
         ]
 
         pre_game_layout = [
-            [sg.Image(key='-MAPPA_PREGAME-', size=img_size_mappa)],
+            [sg.Graph(
+                canvas_size=img_size_mappa,
+                graph_bottom_left=(0, 0),
+                graph_top_right=img_size_mappa,
+                key="-PRE_GRAPH-"
+            )],
             [sg.Text('', font='Tahoma 13 bold', key='-D1_START_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold',  key='-D2_START_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold',  key='-D3_START_LOCATION-')],
@@ -58,7 +94,12 @@ class ScotlandYardGUI:
         ]
 
         game_layout = [
-            [sg.Image(key='-MAPPA-', size=img_size_mappa), sg.Text("Turno 1", key='-COUNTER-', font='Tahoma 13 bold', justification='left', size=(25,3))],
+            [sg.Graph(
+                canvas_size=img_size_mappa,
+                graph_bottom_left=(0, 0),
+                graph_top_right=img_size_mappa,
+                key="-GAME_GRAPH-"
+            ), sg.Text("Turno 1", key='-COUNTER-', font='Tahoma 13 bold', justification='left', size=(25,3))],
             [sg.Text('', font='Tahoma 13 bold',  key='-D1_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold', key='-D2_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold', key='-D3_LOCATION-')],
@@ -97,10 +138,10 @@ class ScotlandYardGUI:
                   ]
         self.window = sg.Window("La fuga di Marco", layout, size=(window_width, window_height), element_justification='c', finalize=True)
         self.window['-MARCO-'].update(data=marco_img_data)
-        self.window['-MAPPA-'].update(data=mappa_img_data)
-        self.window['-MAPPA_PREGAME-'].update(data=mappa_img_data)
         self.window['-WIN_IMG-'].update(data=win_img_data)
         self.window['-LOSE_IMG-'].update(data=lose_img_data)
+        self.map_data = mappa_img_data
+        self.map_height = img_size_mappa[1]
 
     def switch_to_pre_game_layout(self):
         self.window['-IN_LAYOUT-'].update(visible=False)
@@ -130,6 +171,13 @@ class ScotlandYardGUI:
         self.window['-D1_PATH-'].update('Percorso del Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
         self.window['-D2_PATH-'].update('Percorso del Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
         self.window['-D3_PATH-'].update('Percorso del Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        self.window['-PRE_GRAPH-'].draw_image(data=self.map_data, location=(0, self.map_height))
+        self.window['-GAME_GRAPH-'].draw_image(data=self.map_data, location=(0, self.map_height))
+        for idx,x in enumerate(detective_loc):
+            self.window['-PRE_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color='yellow', line_color='black', line_width=1)
+            self.window['-PRE_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
+            self.window['-GAME_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color='yellow', line_color='black', line_width=1)
+            self.window['-GAME_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
         self.detective_starting_loc=detective_loc
 
     def update_detective(self, detective_loc):
@@ -145,6 +193,10 @@ class ScotlandYardGUI:
         self.window['-D3_LOCATION-'].update(prev + ' --> ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
         prev = self.window['-D3_PATH-'].get()
         self.window['-D3_PATH-'].update(prev + ' --> ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        self.window['-GAME_GRAPH-'].draw_image(data=self.map_data, location=(0, self.map_height))
+        for idx,x in enumerate(detective_loc):
+            self.window['-GAME_GRAPH-'].draw_circle(self.loc_list[x-1], 15, fill_color='yellow', line_color='black', line_width=1)
+            self.window['-GAME_GRAPH-'].draw_text(self.det_name[idx], self.loc_list[x-1], color='black', angle=0, text_location='center')
 
     def update_marco_path(self, move):
         if move=='cart':
