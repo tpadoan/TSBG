@@ -72,7 +72,7 @@ class Game:
   def playTurn(self, mrXmove: str):
     self.propagateProb(mrXmove)
     if not len(self.state[1]):
-      print(self.state)
+      return None
     for i in range(self.numDetectives):
       if self.canMove(i):
         x = choice(list(self.state[1].keys()), p=list(self.state[1].values()))
