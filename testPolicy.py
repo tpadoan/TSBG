@@ -1,6 +1,6 @@
 import pickle
 from numpy.random import choice
-import logic
+from logic import Game
 
 # size of graph
 sizeGraph = 21
@@ -143,7 +143,7 @@ def run(G):
 
 
 if __name__ == '__main__':
-  G = logic.game()
+  G = Game()
   wins = 0
   print(f"Testing {numTests} runs")
   print("Run\tD_wins\tX_wins")
