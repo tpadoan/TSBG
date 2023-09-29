@@ -2,9 +2,7 @@ import PySimpleGUI as sg
 from PIL import Image, ImageTk
 import random
 import sys
-
 from logic import Game
-
 
 class ScotlandYardGUI:
     def __init__(self):
@@ -42,7 +40,7 @@ class ScotlandYardGUI:
         win_img_data = ImageTk.PhotoImage(win_img)
         lose_img_data = ImageTk.PhotoImage(lose_img)
 
-        start_txt ="Il pinguino Marco deve scappare dai dipendenti dell'acquario di Trieste\nper ottenere pesce extra dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il delfino verde. Scegli le tue mosse per non farti acchiappare!"
+        start_txt ="Il pinguino Marco deve scappare dai dipendenti dell'acquario di Trieste\nper ottenere pesce extra dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
         initial_layout = [
             [sg.Text(start_txt, size=(img_size_marco[0], 4), font='Tahoma 13 bold',  key='-GAME_DESCRIPTION-')],
             [sg.Image(key='-MARCO-', size = img_size_marco)],
@@ -67,7 +65,7 @@ class ScotlandYardGUI:
             [sg.Text('', font='Tahoma 13 bold', key='-MARCO_LOCATION_TXT-')],
             [sg.Button('Bicicletta', key='-BICI-', button_color='deep sky blue', font='Tahoma 13 bold', size=(20, 5)),
              sg.Button('Autobus', key='-BUS-', button_color='red', font='Tahoma 13 bold', size=(20, 5)),
-             sg.Button('Delfino verde', key='-DELFINO-', button_color='green3', font='Tahoma 13 bold', size=(20, 5)),
+             sg.Button('Traghetto', key='-DELFINO-', button_color='green3', font='Tahoma 13 bold', size=(20, 5)),
              sg.Button('CATTURATO!', key='-CATTURATO-', font='Tahoma 13 bold', size=(20, 5))] 
         ]
 
@@ -82,7 +80,11 @@ class ScotlandYardGUI:
         lose_txt = "Oh no, sei stato catturato! Si ritorna all'acquario!"
 
         lose_layout = [
-            [sg.Text(lose_txt, size=(img_size_marco[0], 4), font='Tahoma 13 bold',  key='-LOSE_DESCRIPTION-')],
+            [sg.Text(lose_txt, size=(img_size_marco[0], 1), font='Tahoma 13 bold',  key='-LOSE_DESCRIPTION-')],
+            [sg.Text('', size=(img_size_marco[0], 1), font='Tahoma 13 bold',  key='-D1_PATH-')],
+            [sg.Text('', size=(img_size_marco[0], 1), font='Tahoma 13 bold',  key='-D2_PATH-')],
+            [sg.Text('', size=(img_size_marco[0], 1), font='Tahoma 13 bold',  key='-D3_PATH-')],
+            [sg.Text('', size=(img_size_marco[0], 1), font='Tahoma 13 bold',  key='-M_PATH-')],
             [sg.Image(key='-LOSE_IMG-', size = img_size_lose)],
             [sg.Button("Ricomincia", key='-LOSE_RESTART-', font='Tahoma 13 bold', size=(20, 5))]
         ]
@@ -106,6 +108,7 @@ class ScotlandYardGUI:
 
     def switch_to_game_layout(self, marco_starting_pos):
         self.window['-MARCO_LOCATION_TXT-'].update('Posizione iniziale di Marco: '+ str(marco_starting_pos))
+        self.window['-M_PATH-'].update('Percorso di Marco: '+ str(marco_starting_pos))
         self.window['-PRE_GAME_LAYOUT-'].update(visible=False)
         self.window['-GAME_LAYOUT-'].update(visible=True)
 
@@ -117,33 +120,53 @@ class ScotlandYardGUI:
             self.window['-GAME_LAYOUT-'].update(visible=False)
             self.window['-LOSE_LAYOUT-'].update(visible=True)
 
-
     def set_detective_starting_loc(self, detective_loc):
-        self.window['-D1_START_LOCATION-'].update('Guardiano 1: '+ str(detective_loc[0]))
-        self.window['-D2_START_LOCATION-'].update('Guardiano 2: '+ str(detective_loc[1]))
-        self.window['-D3_START_LOCATION-'].update('Guardiano 3: '+ str(detective_loc[2]))
-        self.window['-D1_LOCATION-'].update('Guardiano 1: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Guardiano 2: '+ str(detective_loc[1]))  
-        self.window['-D3_LOCATION-'].update('Guardiano 3: '+ str(detective_loc[2]))
+        self.window['-D1_START_LOCATION-'].update('Guardiano A: '+ str(detective_loc[0]))
+        self.window['-D2_START_LOCATION-'].update('Guardiano B: '+ str(detective_loc[1]))
+        self.window['-D3_START_LOCATION-'].update('Guardiano C: '+ str(detective_loc[2]))
+        self.window['-D1_LOCATION-'].update('Guardiano A: '+ str(detective_loc[0]))
+        self.window['-D2_LOCATION-'].update('Guardiano B: '+ str(detective_loc[1]))  
+        self.window['-D3_LOCATION-'].update('Guardiano C: '+ str(detective_loc[2]))
+        self.window['-D1_PATH-'].update('Percorso del Guardiano A: ' + str(detective_loc[0]))
+        self.window['-D2_PATH-'].update('Percorso del Guardiano B: ' + str(detective_loc[1]))
+        self.window['-D3_PATH-'].update('Percorso del Guardiano C: ' + str(detective_loc[2]))
         self.detective_starting_loc=detective_loc
 
     def update_detective(self, detective_loc):
         prev = self.window['-D1_LOCATION-'].get()
         self.window['-D1_LOCATION-'].update(prev + ' --> ' + str(detective_loc[0]))
+        prev = self.window['-D1_PATH-'].get()
+        self.window['-D1_PATH-'].update(prev + ' --> ' + str(detective_loc[0]))
         prev = self.window['-D2_LOCATION-'].get()
         self.window['-D2_LOCATION-'].update(prev + ' --> ' + str(detective_loc[1]))
+        prev = self.window['-D2_PATH-'].get()
+        self.window['-D2_PATH-'].update(prev + ' --> ' + str(detective_loc[1]))
         prev = self.window['-D3_LOCATION-'].get()
         self.window['-D3_LOCATION-'].update(prev + ' --> ' + str(detective_loc[2]))
+        prev = self.window['-D3_PATH-'].get()
+        self.window['-D3_PATH-'].update(prev + ' --> ' + str(detective_loc[2]))
+
+    def update_marco_path(self, move):
+        if move=='cart':
+            transport = 'bicicletta'
+        elif move=='tram':
+            transport = 'autobus'
+        else:
+            transport = 'traghetto'
+        prev = self.window['-MARCO_LOCATION_TXT-'].get()
+        self.window['-MARCO_LOCATION_TXT-'].update(prev + ' -- ' + transport)
+        prev = self.window['-M_PATH-'].get()
+        self.window['-M_PATH-'].update(prev + ' -- ' + transport)
 
     def update_counter(self, counter):
-        self.window['-COUNTER-'].update('Turn ' + str(counter))  
+        self.window['-COUNTER-'].update('Turn ' + str(counter))
 
     def restart_layout(self, win):
         if win:
-            self.window['-WIN_LAYOUT-'].update(visible=False)    
+            self.window['-WIN_LAYOUT-'].update(visible=False)
         else:
             self.window['-LOSE_LAYOUT-'].update(visible=False)
-        self.window['-PRE_GAME_LAYOUT-'].update(visible=True)                 
+        self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
 
 if __name__ == "__main__":
     game_gui = ScotlandYardGUI()
@@ -166,24 +189,27 @@ if __name__ == "__main__":
             pos = ''
             for x in values['-MARCO_LOC_INPUT-']:
                 pos += x
-            mrx_starting_loc = int(pos)
-            if mrx_starting_loc not in range(1,22):
-                sg.popup("Posizione iniziale non valida!")
-                game_gui.window['-MARCO_LOC_INPUT-'].update(values['-MARCO_LOC_INPUT-'][:-1])
+            if not pos.isdigit() or int(pos) not in range(1,22):
+                game_gui.window['-MARCO_LOC_INPUT-'].update(text_color='red')
             else:
+                mrx_starting_loc = int(pos)
+                game_gui.window['-MARCO_LOC_INPUT-'].update(text_color='black')
                 game = Game()
                 game.initGame(detectives=game_gui.detective_starting_loc, mrX=mrx_starting_loc)
                 game_gui.switch_to_game_layout(mrx_starting_loc)
 
-
         elif event in ['-BICI-', '-BUS-', '-DELFINO-']:
-            if counter >= 9:
+            if counter > 9:
                 game_gui.switch_to_endgame(user_win=True)
             move = event2move_dict[event]
+            game_gui.update_marco_path(move)
             new_detective_loc = game.playTurn(move)
-            game_gui.update_detective(new_detective_loc)
-            counter += 1
-            game_gui.update_counter(counter=counter+1)
+            if new_detective_loc:
+                game_gui.update_detective(new_detective_loc)
+                counter += 1
+                game_gui.update_counter(counter=counter+1)
+            else:
+                game_gui.switch_to_endgame(user_win=False)
 
         elif event == '-CATTURATO-':
             game_gui.switch_to_endgame(user_win=False)
