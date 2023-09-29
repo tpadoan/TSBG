@@ -119,18 +119,21 @@ class ScotlandYardGUI:
 
 
     def set_detective_starting_loc(self, detective_loc):
-        self.window['-D1_START_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_START_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
-        self.window['-D3_START_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
-        self.window['-D1_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))  
-        self.window['-D3_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
+        self.window['-D1_START_LOCATION-'].update('Guardiano 1: '+ str(detective_loc[0]))
+        self.window['-D2_START_LOCATION-'].update('Guardiano 2: '+ str(detective_loc[1]))
+        self.window['-D3_START_LOCATION-'].update('Guardiano 3: '+ str(detective_loc[2]))
+        self.window['-D1_LOCATION-'].update('Guardiano 1: '+ str(detective_loc[0]))
+        self.window['-D2_LOCATION-'].update('Guardiano 2: '+ str(detective_loc[1]))  
+        self.window['-D3_LOCATION-'].update('Guardiano 3: '+ str(detective_loc[2]))
         self.detective_starting_loc=detective_loc
 
     def update_detective(self, detective_loc):
-        self.window['-D1_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
-        self.window['-D3_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
+        prev = self.window['-D1_LOCATION-'].get()
+        self.window['-D1_LOCATION-'].update(prev + ' --> ' + str(detective_loc[0]))
+        prev = self.window['-D2_LOCATION-'].get()
+        self.window['-D2_LOCATION-'].update(prev + ' --> ' + str(detective_loc[1]))
+        prev = self.window['-D3_LOCATION-'].get()
+        self.window['-D3_LOCATION-'].update(prev + ' --> ' + str(detective_loc[2]))
 
     def update_counter(self, counter):
         self.window['-COUNTER-'].update('Turn ' + str(counter))  
