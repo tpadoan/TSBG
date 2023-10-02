@@ -7,7 +7,7 @@ sizeGraph = 21
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals =  [] # [i+1 for i in range(maxTurns)]
+reveals =  [] # use [i+1 for i in range(maxTurns)] for fully observable setting
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
