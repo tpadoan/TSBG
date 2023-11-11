@@ -10,8 +10,8 @@ class ScotlandYardGUI:
         self.screen_width, self.screen_height = sg.Window.get_screen_size()
         self.marco_last_loc = None
         self.detective_starting_loc = None
-        self.w_factor = self.screen_width / 2560
-        self.h_factor = self.screen_height / 1440
+        self.w_factor = self.screen_width * 1.1 / 2560
+        self.h_factor = self.screen_height * 1.1 / 1440
         self.loc_list=[
                     (225, 100), 
                     (310, 190), 
@@ -40,8 +40,8 @@ class ScotlandYardGUI:
         self.det_name=['A', 'B', 'C']
 
     def create_window(self):
-        window_width = int(self.screen_width * 0.8)
-        window_height = int(self.screen_height * 0.8)
+        window_width = int(self.screen_width * 0.88)
+        window_height = int(self.screen_height * 0.88)
 
         marco_img = Image.open('./img/marco.gif')
         alpha_marco = marco_img.size[0]/marco_img.size[1]
@@ -55,12 +55,12 @@ class ScotlandYardGUI:
 
         win_img = Image.open('./img/thug_life.jpg')
         alpha_win = win_img.size[0]/win_img.size[1]
-        img_size_win = (int(0.7*window_height*alpha_win), int(0.7*window_height))
+        img_size_win = (int(0.6*window_height*alpha_win), int(0.6*window_height))
         win_img = win_img.resize(img_size_win)
 
         lose_img = Image.open('./img/captured.jpg')
         alpha_lose = lose_img.size[0]/lose_img.size[1]
-        img_size_lose = (int(0.7*window_height*alpha_lose), int(0.7*window_height))
+        img_size_lose = (int(0.6*window_height*alpha_lose), int(0.6*window_height))
         lose_img = lose_img.resize(img_size_lose)
 
         marco_img_data = ImageTk.PhotoImage(marco_img)
@@ -83,14 +83,13 @@ class ScotlandYardGUI:
                 canvas_size=img_size_mappa,
                 graph_bottom_left=(0, 0),
                 graph_top_right=img_size_mappa,
+                enable_events=True,
                 key="-PRE_GRAPH-"
             )],
             [sg.Text('', font='Tahoma 13 bold', key='-D1_START_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold',  key='-D2_START_LOCATION-')],
             [sg.Text('', font='Tahoma 13 bold',  key='-D3_START_LOCATION-')],
-            [sg.Text('Inserisci la posizione iniziale di Marco:', font='Tahoma 13 bold', key='-MARCO_LOCATION-'),
-             sg.Input('', enable_events=True, key='-MARCO_LOC_INPUT-', font=('Arial Bold', 20), justification='left', size=(5,1))],
-            [sg.Button('Ok', key='-OK_POSITION-', font='Tahoma 13 bold', size=(10, 2))]
+            [sg.Text('Clicka sulla posizione iniziale di Marco', font='Tahoma 13 bold', key='-MARCO_LOCATION-')]
         ]
 
         game_layout = [
@@ -224,12 +223,24 @@ class ScotlandYardGUI:
         self.window['-COUNTER-'].update('Turno 1')
         self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
 
+    def nearestLoc(self, x, y):
+        dist = (self.loc_list[0][0]-x)**2 + (self.loc_list[0][1]-y)**2
+        loc = 1
+        for i in range(1,len(self.loc_list)):
+            newDist = (self.loc_list[i][0]-x)**2 + (self.loc_list[i][1]-y)**2
+            if newDist < dist:
+              dist = newDist
+              loc = i+1
+        return loc
+
 if __name__ == "__main__":
     game_gui = ScotlandYardGUI()
     game_gui.create_window()
     counter = 0
     game = None
     event2move_dict = {'-BICI-':'cart', '-BUS-':'tram', '-DELFINO-':'boat'}
+    choosing_pos = False
+
     while True:
         event, values = game_gui.window.read()
 
@@ -239,20 +250,8 @@ if __name__ == "__main__":
         elif event == '-START-':
             detective_loc = random.sample(range(1, 22), 3)
             game_gui.set_detective_starting_loc(detective_loc)
+            choosing_pos = True
             game_gui.switch_to_pre_game_layout()
-
-        elif event == '-OK_POSITION-':
-            pos = ''
-            for x in values['-MARCO_LOC_INPUT-']:
-                pos += x
-            if not pos.isdigit() or int(pos) not in range(1,22):
-                game_gui.window['-MARCO_LOC_INPUT-'].update(text_color='red')
-            else:
-                mrx_starting_loc = int(pos)
-                game_gui.window['-MARCO_LOC_INPUT-'].update(text_color='black')
-                game = Game()
-                game.initGame(detectives=game_gui.detective_starting_loc, mrX=mrx_starting_loc)
-                game_gui.switch_to_game_layout(mrx_starting_loc)
 
         elif event in ['-BICI-', '-BUS-', '-DELFINO-']:
             if counter > 9:
@@ -275,11 +274,22 @@ if __name__ == "__main__":
             detective_loc = random.sample(range(1, 22), 3)
             counter=0
             game_gui.set_detective_starting_loc(detective_loc)
+            choosing_pos = True
             game_gui.restart_layout(win=True)
+
         elif event == '-LOSE_RESTART-':
             detective_loc = random.sample(range(1, 22), 3)
             counter=0
             game_gui.set_detective_starting_loc(detective_loc)
+            choosing_pos = True
             game_gui.restart_layout(win=False)
+
+        elif event == '-PRE_GRAPH-' and choosing_pos:
+            choosing_pos = False
+            x,y = values[event]
+            mrx_starting_loc = game_gui.nearestLoc(x,y)
+            game = Game()
+            game.initGame(detectives=game_gui.detective_starting_loc, mrX=mrx_starting_loc)
+            game_gui.switch_to_game_layout(mrx_starting_loc)
 
     game_gui.window.close()
