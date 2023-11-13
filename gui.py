@@ -224,13 +224,14 @@ class ScotlandYardGUI:
         self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
 
     def nearestLoc(self, x, y):
-        dist = (self.loc_list[0][0]-x)**2 + (self.loc_list[0][1]-y)**2
-        loc = 1
-        for i in range(1,len(self.loc_list)):
-            newDist = (self.loc_list[i][0]-x)**2 + (self.loc_list[i][1]-y)**2
-            if newDist < dist:
-              dist = newDist
-              loc = i+1
+        max_dist = 750
+        dist = max_dist
+        loc = None
+        for i in range(len(self.loc_list)):
+            new_dist = ((self.loc_list[i][0]-x)/self.w_factor)**2 + ((self.loc_list[i][1]-y)/self.h_factor)**2
+            if new_dist < max_dist and new_dist < dist:
+                dist = new_dist
+                loc = i+1
         return loc
 
 if __name__ == "__main__":
@@ -285,11 +286,12 @@ if __name__ == "__main__":
             game_gui.restart_layout(win=False)
 
         elif event == '-PRE_GRAPH-' and choosing_pos:
-            choosing_pos = False
             x,y = values[event]
             mrx_starting_loc = game_gui.nearestLoc(x,y)
-            game = Game()
-            game.initGame(detectives=game_gui.detective_starting_loc, mrX=mrx_starting_loc)
-            game_gui.switch_to_game_layout(mrx_starting_loc)
+            if mrx_starting_loc:
+                choosing_pos = False
+                game = Game()
+                game.initGame(detectives=game_gui.detective_starting_loc, mrX=mrx_starting_loc)
+                game_gui.switch_to_game_layout(mrx_starting_loc)
 
     game_gui.window.close()
