@@ -35,6 +35,15 @@ dest = {}
 for p in range(1, sizeGraph+1):
   dest[p] = cart[p]+tram[p]+boat[p]
 
+def distance(x, y):
+  dist = 0
+  suc = {y}
+  while x not in suc:
+    for p in suc:
+      suc = suc.union(dest[p])
+    dist += 1
+  return dist
+
 def moves(sub_turn, pos):
   if sub_turn>0:
     return [p for p in dest[pos[sub_turn]] if p not in pos[1:]]
@@ -84,11 +93,14 @@ for t in range(maxTurns-1, -1, -1):
         for j in range(1, sizeGraph+1):
           for k in range(1, sizeGraph+1):
             if i!=j!=k!=i:
+              dist = sizeGraph
               for nt,ns,m in succ(t,s,(h,i,j,k)):
                 if s>0:
-                  if V[nt][ns][m][0]>V[t][s][(h,i,j,k)][0] or (V[nt][ns][m][0]==1 and V[nt][ns][m][1]<V[t][s][(h,i,j,k)][1]):
+                  newDist = distance(h,m[s])
+                  if V[nt][ns][m][0]>V[t][s][(h,i,j,k)][0] or (V[nt][ns][m][0]==1 and (V[nt][ns][m][1]<V[t][s][(h,i,j,k)][1] or (V[nt][ns][m][1]==V[t][s][(h,i,j,k)][1] and newDist<dist))):
                     V[t][s][(h,i,j,k)] = V[nt][ns][m]
                     P[t][s][(h,i,j,k)] = m[s]
+                    dist = newDist
                 else:
                   if V[nt][ns][m][0]<V[t][s][(h,i,j,k)][0] or (V[nt][ns][m][0]==V[t][s][(h,i,j,k)][0] and V[nt][ns][m][1]>V[t][s][(h,i,j,k)][1]):
                     V[t][s][(h,i,j,k)] = V[nt][ns][m]
@@ -97,5 +109,8 @@ for t in range(maxTurns-1, -1, -1):
 # stores the optimal policy P on file Pi
 pickle.dump(P, open("models/Pi", "wb"))
 
-# to load value function V and optimal policy P from files, do:
+# stores the expected outcomes V on file V
+# pickle.dump(V, open("models/V", "wb"))
+
+# to load optimal policy P from file, do:
 # P = pickle.load(open("models/Pi", "rb"))
