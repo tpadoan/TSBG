@@ -71,6 +71,21 @@ for s in content.split('\n'):
   cart[int(l[0])] = [int(p) for p in l[1:]]
 
 P = pickle.load(open("models/Pi", "rb"))
+#numEp = 1000000
+#Q = pickle.load(open("models/Q"+str(numEp), "rb"))
+
+def bestAct(Q, state):
+  moves = tuple(set(dest(state[2][state[1]])).difference(state[2]))
+  if not moves:
+    return 0
+  best = moves[0]
+  m = Q[state][best]
+  for act in moves[1:]:
+    val = Q[state][act]
+    if val>m:
+      m = val
+      best = act
+  return best
 
 def dest(source):
   return boat[source] + tram[source] + cart[source]
@@ -106,17 +121,25 @@ def propagate_prob(state, move):
     new[node] = prob/tot
   return new
 
+def distance(x, y):
+  dist = 0
+  succ = {y}
+  while x not in succ:
+    for p in succ:
+      succ = succ.union(dest(p))
+    dist += 1
+  return dist
 
 police = None
 if fixed and numDetectives<4:
-  police = [20-7*i for i in range(numDetectives)]
+  police = [5,6,20]
 else:
   police = choice(list(range(1, sizeGraph+1)), size=numDetectives, replace=False)
 drawMap([police,0,{}])
 
 mrX = None
 if fixed and numDetectives<4:
-  mrX = 5
+  mrX = 13
 else:
   mrX = int((input('Mr.X initial location:\t')).strip())
 state = [police, mrX, {mrX:1.0}]
@@ -150,7 +173,10 @@ while turn < maxTurns and not found:
 
   for i in range(numDetectives):
     x = choice(list(state[2].keys()), p=list(state[2].values()))
-    state[0][i] = P[turn-1][i+1][tuple((state[0][k-1] if k>0 else x for k in range(numDetectives+1)))]
+    detMove = P[turn-1][i+1][tuple((state[0][k-1] if k>0 else x for k in range(numDetectives+1)))]
+    print("det "+str(i)+": thinks "+str(x)+" and moves "+str(state[0][i])+" -> "+str(detMove))
+    state[0][i] = detMove
+    # state[0][i] = bestAct(Q, (turn-1, i, tuple(state[0])))
     diff = state[2].pop(state[0][i], False)
     if diff:
       tot = 1.0 - diff
