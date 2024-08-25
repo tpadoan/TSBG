@@ -3,7 +3,6 @@ from tkinter import ttk
 from tkinter.font import Font
 from PIL import Image, ImageTk
 import random
-from io import BytesIO
 from logic import Game
 
 class ScotlandYardGUI:
