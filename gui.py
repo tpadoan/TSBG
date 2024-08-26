@@ -187,15 +187,15 @@ class ScotlandYardGUI:
         self.game_labels[4].configure(text='Posizione iniziale di Marco:  '+str(marco_starting_pos))
         self.path_labels[3].configure(text='Percorso di Marco:  '+str(marco_starting_pos))
         if self.mode_select.current():
-            self.tickets = [10,10,10]
-            self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})")
-            self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})")
-            self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})")
+            self.tickets = [8,5,3]
+            self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal')
+            self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal')
+            self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal')
         else:
             self.tickets = None
-            self.game_buttons[0].configure(text="Bicicletta")
-            self.game_buttons[1].configure(text="Autobus")
-            self.game_buttons[2].configure(text="Traghetto")
+            self.game_buttons[0].configure(text="Bicicletta", state='normal')
+            self.game_buttons[1].configure(text="Autobus", state='normal')
+            self.game_buttons[2].configure(text="Traghetto", state='normal')
         for i in range(3):
             self.game_buttons[i].update()
         self.game_labels[0].update()
@@ -261,17 +261,17 @@ class ScotlandYardGUI:
         if self.counter == 10:
             self.game_labels[0].configure(text='Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
             if self.mode_select.current():
-                self.game_buttons[0].configure(text="Bicicletta\n")
-                self.game_buttons[1].configure(text="Autobus\n")
-                self.game_buttons[2].configure(text="Traghetto\n")
+                self.game_buttons[0].configure(text="Bicicletta", state='normal')
+                self.game_buttons[1].configure(text="Autobus", state='normal')
+                self.game_buttons[2].configure(text="Traghetto", state='normal')
                 for i in range(3):
                     self.game_buttons[i].update()
         else:
             self.game_labels[0].configure(text='Turno ' + str(self.counter+1))
             if self.mode_select.current():
-                self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})")
-                self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})")
-                self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})")
+                self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal' if self.tickets[0] else 'disabled')
+                self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal' if self.tickets[1] else 'disabled')
+                self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal' if self.tickets[2] else 'disabled')
                 for i in range(3):
                     self.game_buttons[i].update()
         self.game_labels[0].update()
