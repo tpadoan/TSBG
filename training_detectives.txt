@@ -8,7 +8,7 @@
 ########################################################################
 
 [INFO] ifxlsf : Execution started on Mon Sep  2 09:52:00 2024
-       
+
 [INFO] O.K. module 'lsf/10.1.0' is unloaded.
 [INFO] module 'lsf' is loaded
 [INFO] Finalized database for job anagen:students:main_spt9u:DEFAULT.
@@ -29,7 +29,7 @@ Wrapping the env in a DummyVecEnv.
 |    time_elapsed    | 10       |
 |    total_timesteps | 5000     |
 ---------------------------------
----------------------------------
+:1---------------------------------
 | rollout/           |          |
 |    ep_len_mean     | 29.8     |
 |    ep_rew_mean     | -0.06    |
@@ -98,4 +98,53 @@ Wrapping the env in a DummyVecEnv.
 |    iterations      | 1        |
 |    time_elapsed    | 10       |
 |    total_timesteps | 40000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 29.6     |
+|    ep_rew_mean     | -0.06    |
+| time/              |          |
+|    fps             | 475      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 45000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 30.2     |
+|    ep_rew_mean     | -0.14    |
+| time/              |          |
+|    fps             | 474      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 50000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 28.5     |
+|    ep_rew_mean     | 0        |
+| time/              |          |
+|    fps             | 474      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 55000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 25.7     |
+|    ep_rew_mean     | 0.08     |
+| time/              |          |
+|    fps             | 476      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 60000    |
+-------------------------------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 27.2     |
+|    ep_rew_mean     | 0.1      |
+| time/              |          |
+|    fps             | 475      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 65000    |
 ---------------------------------

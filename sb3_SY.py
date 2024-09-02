@@ -3,14 +3,16 @@ from gymnasium.spaces import Discrete, MultiDiscrete
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO, A2C, DQN
 from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-from sb3_contrib.common.wrappers import ActionMasker
+from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 from sb3_contrib.ppo_mask import MaskablePPO
 from sb3_contrib.common.maskable.utils import get_action_masks
+from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 import numpy as np
 import networkx as nx
 import random
 import matplotlib.pyplot as plt
+from stable_baselines3.common.vec_env import DummyVecEnv
 import utils.graph_util, utils.detective_util, utils.mrX_util
 
 
@@ -98,6 +100,9 @@ class ScotlandYard(gym.Env):
             next_node = action + 1
             # Let the corresponding player play
             if self.turn_sub_counter == 0:
+                # Heuristic for mrX:
+                # - 80% selects farthest node from the ones occupied by the detectives
+                # - 20% chooses one of the available nodes at random
                 if random.random() > 0.2:
                     # Maximising min distance from detectives
                     max_dist = 0
@@ -364,66 +369,121 @@ def mask_fn(env: ScotlandYard) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    random_start = True
-    num_detectives = 3
-    num_nodes = 21
-    max_turns = 10
+    train = True
+    if train:
+        random_start = True
+        num_detectives = 3
+        num_nodes = 21
+        max_turns = 10
+        reveal_every = 0
+        n_envs = 8
+        timesteps = 1024
+        total_steps = n_envs * max_turns * timesteps * 8
 
-    env = ScotlandYard(
-        random_start=random_start, num_detectives=num_detectives, max_turns=max_turns
-    )
-    env = ActionMasker(env, mask_fn)
-    check_env(env)
+        obs = "NO_OBS" if reveal_every == 0 else f"OBS_EVERY_{reveal_every}"
+        model_name = f"Masked_PPO_SY_{obs}_{(total_steps/1e6):.3f}M_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode"
+        models_dir = f"/home/anagen/students/nodm/main_spt9u/units/main/anagen/bassoda/TSBG/models/SB3_detectives/{model_name}"
 
-    model = MaskablePPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1000)
-    # model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_NO_OBS_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
-    # model.set_env(env)
-    # # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
-    # # # model = DQN("MlpPolicy", env, verbose=1)
-    # # # # print("Policy results before training")
-    # # # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
+        kwargs = {
+            "random_start": random_start,
+            "num_detectives": num_detectives,
+            "max_turns": max_turns,
+            "reveal_every": reveal_every,
+        }
 
-    timesteps = 5000
-    for i in range(1000):
-        model.learn(total_timesteps=timesteps, reset_num_timesteps=False)
-    #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO")
-    #     # model.learn(total_timesteps=timesteps, reset_num_timesteps = False, tb_log_name="PPO", callback=eval_callback)
-    #     # print(f"WITH deepcopy took: {time.time()-start}s to learn in 5000 steps")
-    model.save(
-        f"models/SB3_detectives/Masked_PPO_SY_NO_OBS_5M_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode"
-    )
-    # # model.save(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+        vec_env = make_vec_env(
+            ScotlandYard,
+            n_envs=n_envs,
+            env_kwargs=kwargs,
+            vec_env_cls=DummyVecEnv,
+        )
 
-    # model = MaskablePPO.load(
-    #     f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode"
-    # )
-    # model = PPO.load(f"PPO_SY_50k_{max_turns}turns_smartMRX_randomStartEachEpisode")
-    # model = DQN.load(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
-    # model.set_env(env)
+        eval_callback = MaskableEvalCallback(
+            vec_env,
+            best_model_save_path=models_dir,
+            eval_freq=timesteps * n_envs,
+            deterministic=False,
+            render=False,
+        )
 
-    countD = 0
-    countX = 0
-    num_tests = 1000
+        model = MaskablePPO(
+            "MlpPolicy", vec_env, verbose=1, n_steps=timesteps, n_epochs=32, batch_size=32
+        )
+        # model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_NO_OBS_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
+        # model.set_env(env)
+        # # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
+        # # # model = DQN("MlpPolicy", env, verbose=1)
+        # # # # print("Policy results before training")
+        # # # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
 
-    str1 = ""
-    print(f"Testing on {num_tests} runs")
-    print("Run\tD_wins\tX_wins\n")
-    for i in range(num_tests):
-        done = False
-        obs, _ = env.reset()
-        # env.render()
-        while not done:
-            # print(f"before step {obs}")
-            action_masks = get_action_masks(env)
-            action, _ = model.predict(obs, action_masks=action_masks)
-            obs, reward, done, truncated, info = env.step(action)
-        # env.render()
-        if reward < 0:
-            countX += 1
-        elif reward > 0:
-            countD += 1
-        str1 = str1 + (str(i + 1) + "\t" + str(countD) + "\t" + str(countX))
-        str1 = str1 + "\n"
-    print(str1)
-    print("Detectives =", round(100 * countD / num_tests, 2), "%")
-    print("Mr.X =", round(100 * countX / num_tests, 2), "%")
+        model.learn(
+            total_timesteps=total_steps, reset_num_timesteps=False, callback=eval_callback
+        )
+        model.save(models_dir + "/final_model.zip")
+
+        # model = MaskablePPO.load(
+        #     f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode"
+        # )
+        # model = PPO.load(f"PPO_SY_50k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+        # model = DQN.load(f"DQN_SY_100k_{max_turns}turns_smartMRX_randomStartEachEpisode")
+        # model.set_env(env)
+
+    else:
+        random_start = True
+        num_detectives = 3
+        num_nodes = 21
+        max_turns = 10
+        reveal_every = 0
+
+        kwargs = {
+            "random_start": random_start,
+            "num_detectives": num_detectives,
+            "max_turns": max_turns,
+            "reveal_every": reveal_every,
+        }
+
+        vec_env = make_vec_env(
+            ScotlandYard,
+            n_envs=1,
+            env_kwargs=kwargs,
+            vec_env_cls=DummyVecEnv,
+        )
+
+        test_env = ScotlandYard(
+            random_start,
+            num_detectives,
+            max_turns,
+            reveal_every,
+        )
+
+        model = MaskablePPO.load(
+            "",
+            env=vec_env,
+        )
+
+        countD = 0
+        countX = 0
+        num_tests = 1000
+
+        str1 = ""
+        print(f"Testing on {num_tests} runs")
+        print("Run\tD_wins\tX_wins\n")
+        for i in range(num_tests):
+            done = False
+            obs, _ = vec_env.reset()
+            # env.render()
+            while not done:
+                # print(f"before step {obs}")
+                action_masks = get_action_masks(test_env)
+                action, _ = model.predict(obs, action_masks=action_masks)
+                obs, reward, done, truncated, info = test_env.step(action)
+            # env.render()
+            if reward < 0:
+                countX += 1
+            elif reward > 0:
+                countD += 1
+            str1 = str1 + (str(i + 1) + "\t" + str(countD) + "\t" + str(countX))
+            str1 = str1 + "\n"
+        print(str1)
+        print("Detectives =", round(100 * countD / num_tests, 2), "%")
+        print("Mr.X =", round(100 * countX / num_tests, 2), "%")
