@@ -17,7 +17,7 @@ movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [1]+[i for i in range(2, maxTurns+1, 3)]
+reveals = [1]+[i for i in range(4, maxTurns+1, 3)]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
@@ -114,29 +114,14 @@ def propagate(state, move):
       new = new.union(cart[s])
   return new.difference(state[0])
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-# police = None
-# if fixed and numDetectives<4:
-#   police = [20-7*i for i in range(numDetectives)]
-# else:
-#   police = np.random.choice(np.array(range(1, sizeGraph+1)), size=numDetectives, replace=False)
-# drawMap([police,0,0,[]])
-# detectives_model = [DetectiveModel(sizeGraph, numDetectives, maxTurns, device).to(device) for _ in range(numDetectives)]
 
 max_turns = 10
 detectives_model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{numDetectives}detectives_smartMRX_randomStartEachEpisode")
 env_SY = ScotlandYard(random_start=True, num_detectives=numDetectives, max_turns=max_turns)
 env = ActionMasker(env_SY, mask_fn)
 detectives_model.set_env(env)
-# for i in range(numDetectives):
-#   detectives_model[i].restore(episode=numEpisodes+i)
-#   detectives_model[i].eval()
 
 mrX = env.starting_nodes[0]
-# if fixed and numDetectives<4:
-#   mrX = 5
-# else:
-#   mrX = int((input('Mr.X initial location:\t')).strip())
 tlog = [[0,0,0]]*maxTurns
 state = [env.starting_nodes[1:], mrX, tlog, {mrX}]
 drawMap(state, "Omo Vespa")
@@ -148,11 +133,6 @@ while turn < maxTurns and not found:
   print('\nTURN ' + str(turn))
   if turn in reveals:
     print('Mr.X location will be revealed!')
-  # if input('Type anything if found..\t').strip():
-    # found = True
-  # move = input('Mr.X moves by:\t').strip()
-  # while move not in movesNames:
-    # move = input('input error, try again:\t').strip()
   drawMap(state, "Omo Vespa")
   plt.pause(2)
   mrX = input('mr.X moves secretly to:\t').strip()
@@ -174,7 +154,6 @@ while turn < maxTurns and not found:
 
   env_SY.turn_sub_counter += 1
   for i in range(numDetectives):
-      # for i in range(numDetectives):
     observation = nodes_ohe(state[3]) if turn in reveals else nodes_ohe({-1}) # + [1 if j==i else 0 for j in range(numDetectives)]
     for ohe in [node_ohe(state[0][j]) for j in range(numDetectives)]:
       observation.extend(ohe)

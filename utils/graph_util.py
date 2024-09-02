@@ -45,8 +45,8 @@ def get_coords(graph: nx.Graph, node: int) -> tuple[int, int]:
     return graph.nodes[node]['pos']
 
 
-def connections(graph: nx.Graph, node: int) -> np.ndarray[int]:
-    """ Find the valid connections from one point to another one, specifying also which 
+def connections(graph: nx.Graph, node: int) -> np.ndarray:
+    """ Find the valid connections from one point to another one, specifying also which
         transport can be used to reach the destination node from the source.
 
     Args:

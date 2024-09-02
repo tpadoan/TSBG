@@ -1,0 +1,101 @@
+########################################################################
+### ifxlsf:iwutilities/2.0.2 (Revision development)
+###
+### CAMINO Release 2.0.2
+### Copyright(c) Infineon Technologies AG 1999-2024 ALL RIGHTS RESERVED
+###
+### Please report any problems/enhancements to JIRA
+########################################################################
+
+[INFO] ifxlsf : Execution started on Mon Sep  2 09:52:00 2024
+       
+[INFO] O.K. module 'lsf/10.1.0' is unloaded.
+[INFO] module 'lsf' is loaded
+[INFO] Finalized database for job anagen:students:main_spt9u:DEFAULT.
+[INFO] Running job anagen:students:main_spt9u:DEFAULT on LSF.
+Job <905162119> is submitted to queue <static_hi>.
+<<Waiting for dispatch ...>>
+<<Starting on vihlc3399>>
+Using cpu device
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 29.5     |
+|    ep_rew_mean     | -0.1     |
+| time/              |          |
+|    fps             | 469      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 5000     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 29.8     |
+|    ep_rew_mean     | -0.06    |
+| time/              |          |
+|    fps             | 480      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 10000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 31.9     |
+|    ep_rew_mean     | -0.26    |
+| time/              |          |
+|    fps             | 475      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 15000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 30       |
+|    ep_rew_mean     | -0.12    |
+| time/              |          |
+|    fps             | 477      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 20000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 30.6     |
+|    ep_rew_mean     | -0.06    |
+| time/              |          |
+|    fps             | 476      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 25000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 30.6     |
+|    ep_rew_mean     | -0.14    |
+| time/              |          |
+|    fps             | 473      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 30000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 27.7     |
+|    ep_rew_mean     | 0.08     |
+| time/              |          |
+|    fps             | 481      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 35000    |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 28.6     |
+|    ep_rew_mean     | 0.08     |
+| time/              |          |
+|    fps             | 474      |
+|    iterations      | 1        |
+|    time_elapsed    | 10       |
+|    total_timesteps | 40000    |
+---------------------------------
