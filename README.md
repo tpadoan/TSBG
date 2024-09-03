@@ -4,4 +4,5 @@ Presented at the sharper night 2023 at Immaginario Scientifico, Trieste (Italy),
 The player, moving through a graph, has to avoid getting caught by the opponents, controlled by the AI.
 The AI only knows the player's initial position and the transports taken to move. 
 
-This other branch of the project uses Q-learning to solve the problem, instead.
+The project includes a solver to compute optimal policies for all players, based on min-maxing the rewards associated with the possible moves in a fully observable setting.
+The resulting policy is then applied stochastically based on the probability distribution of the possible player's current locations, inferred from the sequence of transports taken.

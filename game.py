@@ -9,21 +9,21 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 from sb3_SY import ScotlandYard, mask_fn
 
 from models.detective import DetectiveModel
+import pickle
+from numpy.random import choice
 
 # size of graph
 sizeGraph = 21
-# list of names of moves, same order as in graph utils
-movesNames = ['boat', 'tram', 'cart']
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [1]+[i for i in range(2, maxTurns+1, 3)]
+reveals =  [] # use [i+1 for i in range(maxTurns)] for fully observable setting
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
 fixed = False
-# number of epispdes used for learning
-numEpisodes = 20000
+# list of names of moves, same order as in graph utils
+movesNames = ['boat', 'tram', 'cart']
 
 coords = {}
 f = open("data/coords.txt", "r", encoding="utf8")
@@ -42,7 +42,7 @@ def drawMap(state, player_name):
   plt.axis('off')
   X = []
   Y = []
-  for p in state[3]:
+  for p in state[2].keys():
     X.append(coords[p][0])
     Y.append(coords[p][1])
   plt.plot(X, Y, 'o', ms=11, color='red', mec='magenta')
@@ -81,17 +81,22 @@ for s in content.split('\n'):
   l = s.split(' ')
   cart[int(l[0])] = [int(p) for p in l[1:]]
 
-def node_ohe(node):
-  return [1 if (i+1) == node else 0 for i in range(sizeGraph)]
+P = pickle.load(open("models/Pi", "rb"))
+#numEp = 1000000
+#Q = pickle.load(open("models/Q"+str(numEp), "rb"))
 
-def nodes_ohe(nodes):
-  return [1 if (i+1) in nodes else 0 for i in range(sizeGraph)]
-
-def transport_ohe(move):
-  return [1 if move == t else 0 for t in movesNames]
-
-def getMoves(police, det_id):
-  return [(c, 'cart') for c in cart[police[det_id]] if c not in police] + [(t, 'tram') for t in tram[police[det_id]] if t not in police] + [(b, 'boat') for b in boat[police[det_id]] if b not in police]
+def bestAct(Q, state):
+  moves = tuple(set(dest(state[2][state[1]])).difference(state[2]))
+  if not moves:
+    return 0
+  best = moves[0]
+  m = Q[state][best]
+  for act in moves[1:]:
+    val = Q[state][act]
+    if val>m:
+      m = val
+      best = act
+  return best
 
 def dest(source):
   return boat[source] + tram[source] + cart[source]
@@ -103,16 +108,38 @@ def transportFor(source, target):
     return 'tram'
   return 'cart'
 
-def propagate(state, move):
-  new = set()
-  for s in state[3]:
-    if move == 'boat':
-      new = new.union(boat[s])
-    elif move == 'tram':
-      new = new.union(tram[s])
+def propagate_prob(state, move):
+  new = {}
+  tot = 0
+  for node,prob in state[2].items():
+    transport = None
+    if move=='cart':
+      transport = cart
+    elif move=='tram':
+      transport = tram
     else:
-      new = new.union(cart[s])
-  return new.difference(state[0])
+      transport = boat
+    succ = [d for d in transport[node] if d not in state[0]]
+    size = len(succ)
+    for s in succ:
+      p = prob/size
+      if s in new:
+        new[s] += p
+      else:
+        new[s] = p
+      tot += p
+  for node,prob in new.items():
+    new[node] = prob/tot
+  return new
+
+def distance(x, y):
+  dist = 0
+  succ = {y}
+  while x not in succ:
+    for p in succ:
+      succ = succ.union(dest(p))
+    dist += 1
+  return dist
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 # police = None
@@ -161,16 +188,16 @@ while turn < maxTurns and not found:
   mrX = int(mrX)
   move = transportFor(state[1], mrX)
   state[1] = mrX
-  state[2][turn-1] = transport_ohe(move)
   if turn in reveals:
     print('Mr.X location has been revealed')
-    state[3] = {state[1]}
+    state[2] = {state[1]:1.0}
   else:
     state[3] = propagate(state, move)
   drawMap(state, "Omo Vespa")
   plt.pause(2)
   if state[1] in state[0]:
     found = True
+    break
 
   env_SY.turn_sub_counter += 1
   for i in range(numDetectives):
