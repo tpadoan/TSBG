@@ -68,7 +68,7 @@ class ScotlandYardGUI:
             [sg.Button('Bicicletta', key='-BICI-', button_color='deep sky blue', font='Tahoma 13 bold', size=(20, 5)),
              sg.Button('Autobus', key='-BUS-', button_color='red', font='Tahoma 13 bold', size=(20, 5)),
              sg.Button('Delfino verde', key='-DELFINO-', button_color='green3', font='Tahoma 13 bold', size=(20, 5)),
-             sg.Button('CATTURATO!', key='-CATTURATO-', font='Tahoma 13 bold', size=(20, 5))] 
+             sg.Button('CATTURATO!', key='-CATTURATO-', font='Tahoma 13 bold', size=(20, 5))]
         ]
 
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
@@ -87,7 +87,7 @@ class ScotlandYardGUI:
             [sg.Button("Ricomincia", key='-LOSE_RESTART-', font='Tahoma 13 bold', size=(20, 5))]
         ]
 
-        layout = [[sg.Column(initial_layout, key='-IN_LAYOUT-'), 
+        layout = [[sg.Column(initial_layout, key='-IN_LAYOUT-'),
                   sg.Column(game_layout, visible=False, key='-GAME_LAYOUT-'),
                   sg.Column(pre_game_layout, visible=False, key='-PRE_GAME_LAYOUT-'),
                   sg.Column(win_layout, visible=False, key='-WIN_LAYOUT-'),
@@ -123,7 +123,7 @@ class ScotlandYardGUI:
         self.window['-D2_START_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
         self.window['-D3_START_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
         self.window['-D1_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))  
+        self.window['-D2_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
         self.window['-D3_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
         self.detective_starting_loc=detective_loc
 
@@ -133,14 +133,14 @@ class ScotlandYardGUI:
         self.window['-D3_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
 
     def update_counter(self, counter):
-        self.window['-COUNTER-'].update('Turn ' + str(counter))  
+        self.window['-COUNTER-'].update('Turn ' + str(counter))
 
     def restart_layout(self, win):
         if win:
-            self.window['-WIN_LAYOUT-'].update(visible=False)    
+            self.window['-WIN_LAYOUT-'].update(visible=False)
         else:
             self.window['-LOSE_LAYOUT-'].update(visible=False)
-        self.window['-PRE_GAME_LAYOUT-'].update(visible=True)                 
+        self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
 
 if __name__ == "__main__":
     game_gui = ScotlandYardGUI()

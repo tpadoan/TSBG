@@ -369,16 +369,16 @@ def mask_fn(env: ScotlandYard) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    train = True
+    train = False
     if train:
         random_start = True
         num_detectives = 3
         num_nodes = 21
         max_turns = 10
-        reveal_every = 0
+        reveal_every = 3
         n_envs = 8
         timesteps = 1024
-        total_steps = n_envs * max_turns * timesteps * 8
+        total_steps = n_envs * max_turns * timesteps * 64
 
         obs = "NO_OBS" if reveal_every == 0 else f"OBS_EVERY_{reveal_every}"
         model_name = f"Masked_PPO_SY_{obs}_{(total_steps/1e6):.3f}M_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode"
@@ -457,27 +457,27 @@ if __name__ == "__main__":
         )
 
         model = MaskablePPO.load(
-            "",
+            "/home/anagen/students/nodm/main_spt9u/units/main/anagen/bassoda/TSBG/models/SB3_detectives/Masked_PPO_SY_OBS_EVERY_3_0.655M_10turns_3detectives_smartMRX_randomStartEachEpisode/final_model.zip",
             env=vec_env,
         )
 
         countD = 0
         countX = 0
-        num_tests = 1000
+        num_tests = int(1e5)
 
         str1 = ""
         print(f"Testing on {num_tests} runs")
         print("Run\tD_wins\tX_wins\n")
         for i in range(num_tests):
             done = False
-            obs, _ = vec_env.reset()
+            obs = vec_env.reset()
             # env.render()
             while not done:
                 # print(f"before step {obs}")
                 action_masks = get_action_masks(test_env)
                 action, _ = model.predict(obs, action_masks=action_masks)
                 obs, reward, done, truncated, info = test_env.step(action)
-            # env.render()
+            # test_env.render()
             if reward < 0:
                 countX += 1
             elif reward > 0:
