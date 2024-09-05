@@ -16,27 +16,27 @@ class ScotlandYardGUI:
         self.detective_starting_loc = None
         self.w_factor = self.screen_width * 1.1 / 2560
         self.h_factor = self.screen_height * 1.1 / 1440
-        self.loc_list=[(225, 100), 
-            (310, 190), 
-            (412, 205), 
-            (515, 295), 
-            (555, 425), 
-            (505, 130), 
-            (650, 285), 
-            (675, 457), 
-            (563, 530), 
-            (435, 733), 
-            (635, 80), 
-            (730, 335), 
-            (735, 580), 
-            (800, 205), 
-            (825, 298), 
-            (875, 487), 
-            (710, 737),
-            (850, 60),
-            (940, 220),
-            (1015, 550),
-            (940, 675)]
+        self.loc_list=[(225, 100),  #  1
+            (311, 189),             #  2
+            (412, 205),             #  3
+            (515, 295),             #  4
+            (556, 425),             #  5
+            (505, 133),             #  6
+            (650, 285),             #  7
+            (675, 459),             #  8
+            (563, 530),             #  9
+            (436, 735),             # 10
+            (635, 80),              # 11
+            (730, 336),             # 12
+            (735, 580),             # 13
+            (802, 205),             # 14
+            (826, 300),             # 15
+            (875, 488),             # 16
+            (710, 740),             # 17
+            (852, 60),              # 18
+            (940, 220),             # 19
+            (1012, 550),            # 20
+            (940, 675)]             # 21
         for i in range(len(self.loc_list)):
             self.loc_list[i] = (int(self.w_factor*self.loc_list[i][0]), int(0.7*0.88*self.screen_height) - int(self.h_factor*self.loc_list[i][1]))
 
@@ -76,19 +76,23 @@ class ScotlandYardGUI:
         start_txt ="Il pinguino Marco deve scappare dai guardiani dell'acquario di Trieste\nper ottenere pesce dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
         self.initial_layout = tk.Frame(self.window, width=window_width, height=window_height)
         tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 7))
-        tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=2, sticky="w", pady=7)
+        tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=3, sticky="w", pady=7)
         tk.Button(self.initial_layout, text="Inizia a giocare!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, sticky="w", pady=7)
         self.mode_select = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
         self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
         self.mode_select.current(0)
         self.mode_select.grid(row=2, column=1)
+        self.show_infoSet = tk.IntVar()
+        self.show_infoSet.set(0)
+        self.infoSet_checkbox = tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet)
+        self.infoSet_checkbox.grid(row=2, column=2)
         self.initial_layout.pack()
 
         self.pre_game_layout = tk.Frame(self.window, width=window_width, height=window_height)
         self.canvas = tk.Canvas(self.pre_game_layout, width=img_size_mappa[0], height=img_size_mappa[1])
         self.canvas.bind("<Button-1>", self.click_on_pos)
         self.canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
-        self.pre_game_pos = (self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r))
+        self.pre_game_pos = (self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
         self.canvas.grid(row=0, column=0, sticky="w", pady=(14, 7))
         self.pre_game_labels = (tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
@@ -100,7 +104,11 @@ class ScotlandYardGUI:
         self.game_layout = tk.Frame(self.window, width=window_width, height=window_height)
         self.map_canvas = tk.Canvas(self.game_layout, width=img_size_mappa[0], height=img_size_mappa[1])
         self.map_canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
-        self.game_pos = (self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r))
+        self.game_pos = (self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
+        self.infoSet = []
+        for i in range(21):
+            self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
+            self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
         self.map_canvas.grid(row=0, column=0, columnspan=4, sticky="w", pady=(14, 7))
         self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=25),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
@@ -135,8 +143,8 @@ class ScotlandYardGUI:
         tk.Label(self.lose_layout, image=self.lose_img_data).grid(row=5, column=0, columnspan=2, sticky="w", pady=7)
         tk.Button(self.lose_layout, text="Ricomincia", font=self.main_font, width=20, height=2, background='lightsteelblue', command=lambda:self.restart_layout(False)).grid(row=6, column=0, sticky="w", pady=7)
 
-    def create_circle(self, canv, x, y, r):
-        return canv.create_oval(x-r, y-r, x+r, y+r, fill=None, outline='yellow', width=4)
+    def create_circle(self, canv, x, y, r, color):
+        return canv.create_oval(x-r, y-r, x+r, y+r, fill=None, outline=color, width=4)
 
     def nearest_loc(self, x, y):
         dist = 1050    # initially: max acceptable distance
@@ -157,7 +165,7 @@ class ScotlandYardGUI:
         if self.counter == 10:
             self.switch_to_endgame(True)
         else:
-            if self.mode_select.current():
+            if self.mode_select.current()==1:
                 if move=='cart':
                     self.tickets[0] -= 1
                 elif move=='tram':
@@ -165,17 +173,33 @@ class ScotlandYardGUI:
                 elif move=='boat':
                     self.tickets[2] -= 1
             self.update_marco_path(move)
-            new_detective_loc = self.game.playTurn(move)
+            new_detective_loc, found = self.game.playTurn(move)
             if new_detective_loc:
                 self.update_detective(new_detective_loc)
                 self.counter += 1
                 self.update_counters()
             else:
                 self.switch_to_endgame(False)
+            if found:
+                self.game_buttons[0].configure(text="Bicicletta", state='disabled')
+                self.game_buttons[1].configure(text="Autobus", state='disabled')
+                self.game_buttons[2].configure(text="Traghetto", state='disabled')
+                for i in range(3):
+                    self.game_buttons[i].update()
+            self.update_infoSet(self.game.getMrXPos())
+
+    def update_infoSet(self, infoS):
+        if self.show_infoSet.get():
+            for i in range(21):
+                if i+1 in infoS:
+                    self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
+                else:
+                    self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
 
     def switch_to_pre_game_layout(self):
-        detective_loc = random.sample(range(1, 22), 3)
+        detective_loc = [2,4,6] # random.sample(range(1, 22), 3)
         self.set_detective_starting_loc(detective_loc)
+        self.update_infoSet([])
         self.initial_layout.pack_forget()
         self.pre_game_layout.pack()
 
@@ -183,10 +207,11 @@ class ScotlandYardGUI:
         self.counter = 0
         self.game = Game()
         self.game.initGame(self.detective_starting_loc, marco_starting_pos)
+        self.update_infoSet(self.game.getMrXPos())
         self.game_labels[0].configure(text='Turno 1')
         self.game_labels[4].configure(text='Posizione iniziale di Marco:  '+str(marco_starting_pos))
         self.path_labels[3].configure(text='Percorso di Marco:  '+str(marco_starting_pos))
-        if self.mode_select.current():
+        if self.mode_select.current()==1:
             self.tickets = [8,5,3]
             self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal')
             self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal')
@@ -260,7 +285,7 @@ class ScotlandYardGUI:
     def update_counters(self):
         if self.counter == 10:
             self.game_labels[0].configure(text='Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
-            if self.mode_select.current():
+            if self.mode_select.current()==1:
                 self.game_buttons[0].configure(text="Bicicletta", state='normal')
                 self.game_buttons[1].configure(text="Autobus", state='normal')
                 self.game_buttons[2].configure(text="Traghetto", state='normal')
@@ -268,7 +293,7 @@ class ScotlandYardGUI:
                     self.game_buttons[i].update()
         else:
             self.game_labels[0].configure(text='Turno ' + str(self.counter+1))
-            if self.mode_select.current():
+            if self.mode_select.current()==1:
                 self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal' if self.tickets[0] else 'disabled')
                 self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal' if self.tickets[1] else 'disabled')
                 self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal' if self.tickets[2] else 'disabled')
