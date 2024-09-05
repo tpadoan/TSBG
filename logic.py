@@ -35,6 +35,9 @@ class Game:
       self.state = [detectives[:], {mrX:1.0}]
     self.turn = 0
 
+  def getMrXPos(self):
+    return self.state[1].keys()
+
   def dest(self, source: int):
     return self.boat[source] + self.tram[source] + self.cart[source]
 
@@ -72,7 +75,7 @@ class Game:
   def playTurn(self, mrXmove: str):
     self.propagateProb(mrXmove)
     if not len(self.state[1]):
-      return None
+      return (None, True)
     for i in range(self.numDetectives):
       if self.canMove(i):
         x = choice(list(self.state[1].keys()), p=list(self.state[1].values()))
@@ -80,10 +83,10 @@ class Game:
         diff = self.state[1].pop(self.state[0][i], False)
         if not len(self.state[1]):
           self.turn += 1
-          return self.state[0][:]
+          return (self.state[0][:], True)
         if diff:
           tot = 1.0 - diff
           for node,prob in self.state[1].items():
             self.state[1][node] = prob/tot
     self.turn += 1
-    return self.state[0][:]
+    return (self.state[0][:], False)
