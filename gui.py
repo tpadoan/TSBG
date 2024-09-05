@@ -77,7 +77,7 @@ class ScotlandYardGUI:
         self.initial_layout = tk.Frame(self.window, width=window_width, height=window_height)
         tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 7))
         tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=3, sticky="w", pady=7)
-        tk.Button(self.initial_layout, text="Inizia a giocare!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, sticky="w", pady=7)
+        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, sticky="w", pady=7)
         self.mode_select = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
         self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
         self.mode_select.current(0)
@@ -108,7 +108,6 @@ class ScotlandYardGUI:
         self.infoSet = []
         for i in range(21):
             self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
-            self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
         self.map_canvas.grid(row=0, column=0, columnspan=4, sticky="w", pady=(14, 7))
         self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=25),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
@@ -186,10 +185,10 @@ class ScotlandYardGUI:
                 self.game_buttons[2].configure(text="Traghetto", state='disabled')
                 for i in range(3):
                     self.game_buttons[i].update()
-            self.update_infoSet(self.game.getMrXPos())
+            if self.show_infoSet.get():
+                self.update_infoSet(self.game.getMrXPos())
 
     def update_infoSet(self, infoS):
-        if self.show_infoSet.get():
             for i in range(21):
                 if i+1 in infoS:
                     self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
@@ -197,7 +196,7 @@ class ScotlandYardGUI:
                     self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
 
     def switch_to_pre_game_layout(self):
-        detective_loc = [2,4,6] # random.sample(range(1, 22), 3)
+        detective_loc = random.sample(range(1, 22), 3)
         self.set_detective_starting_loc(detective_loc)
         self.update_infoSet([])
         self.initial_layout.pack_forget()
@@ -207,7 +206,8 @@ class ScotlandYardGUI:
         self.counter = 0
         self.game = Game()
         self.game.initGame(self.detective_starting_loc, marco_starting_pos)
-        self.update_infoSet(self.game.getMrXPos())
+        if self.show_infoSet.get():
+            self.update_infoSet(self.game.getMrXPos())
         self.game_labels[0].configure(text='Turno 1')
         self.game_labels[4].configure(text='Posizione iniziale di Marco:  '+str(marco_starting_pos))
         self.path_labels[3].configure(text='Percorso di Marco:  '+str(marco_starting_pos))
