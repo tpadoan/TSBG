@@ -103,37 +103,19 @@ class ScotlandYard(gym.Env):
                 # Heuristic for mrX:
                 # - 80% selects farthest node from the ones occupied by the detectives
                 # - 20% chooses one of the available nodes at random
-                if random.random() > 0.0:
-                    # weights = self.exponential_weighted_distance_mrX(valid_moves)
-                    # best_move = random.choices(
-                    #     valid_moves, weights=weights, k=1
-                    # )[0]
-                    # self.mrX[0] = best_move[1]
-                    # self.mrX_transport = np.array(best_move[2:])
+                if random.random() > 0.2:
                     # Maximising min distance from detectives
                     max_dist = 0
-                    best_action_list = []
+                    best_action_idx = 0
                     for i in range(valid_moves.shape[0]):
                         dist = self.min_shortest_path(valid_moves[i][1])
                         if max_dist < dist:
-                            best_action_list = []
-                            best_action_list.append(i)
+                            best_action_idx = i
                             max_dist = dist
-                        elif max_dist == dist:
-                            best_action_list.append(i)
-                    if len(best_action_list) > 1:
-                        weights = self.weight_transport(
-                            [valid_moves[j][2:] for j in best_action_list]
-                        )
-                    else:
-                        weights = [1]
-                    best_action_idx = random.choices(
-                        best_action_list, weights=weights, k=1
-                    )[0]
                     self.mrX[0] = valid_moves[best_action_idx][1]
                     self.mrX_transport = np.array(valid_moves[best_action_idx][2:])
                 else:
-                    chosen_move = random.choices(valid_moves, k=1)[0]
+                    chosen_move = random.choice(valid_moves)
                     self.mrX[0] = chosen_move[1]
                     self.mrX_transport = np.array(chosen_move[2:])
             else:

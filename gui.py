@@ -307,7 +307,6 @@ class ScotlandYardGUI:
         else:
             self.lose_layout.pack_forget()
         self.initial_layout.pack()
-
     def mainloop(self):
         self.window.mainloop()
 

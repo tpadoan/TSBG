@@ -16,7 +16,7 @@ movesNames = ["boat", "tram", "cart"]
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [0]
+reveals = []
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
