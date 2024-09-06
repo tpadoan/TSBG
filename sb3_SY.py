@@ -44,7 +44,7 @@ class ScotlandYard(gym.Env):
         # State space description
         # The state will be the one hot encoding of mrX position followed by the i-th detective position and the transport that mrX used
         self.observation_space = MultiDiscrete(
-            np.array([2] * self.G.number_of_nodes() * (1 + num_detectives) + [3] * 3)
+            np.array([2] * self.G.number_of_nodes() * (1 + num_detectives) + [3] * num_detectives)
         )
         initial_state = (
             np.array(
@@ -83,7 +83,7 @@ class ScotlandYard(gym.Env):
         valid_moves = self.get_valid_moves()
         valid_dst = [move[1] for move in valid_moves]
 
-        # If there are no valid destination, then mrX cannot move anymore and the game is over
+        # If there are no valid destinations, then mrX cannot move anymore and the game is over
         if self.turn_sub_counter == 0 and not valid_dst:
             self.reward = 1
             self.done = True
@@ -103,19 +103,37 @@ class ScotlandYard(gym.Env):
                 # Heuristic for mrX:
                 # - 80% selects farthest node from the ones occupied by the detectives
                 # - 20% chooses one of the available nodes at random
-                if random.random() > 0.2:
+                if random.random() > 0.0:
+                    # weights = self.exponential_weighted_distance_mrX(valid_moves)
+                    # best_move = random.choices(
+                    #     valid_moves, weights=weights, k=1
+                    # )[0]
+                    # self.mrX[0] = best_move[1]
+                    # self.mrX_transport = np.array(best_move[2:])
                     # Maximising min distance from detectives
                     max_dist = 0
-                    best_action_idx = 0
+                    best_action_list = []
                     for i in range(valid_moves.shape[0]):
                         dist = self.min_shortest_path(valid_moves[i][1])
                         if max_dist < dist:
-                            best_action_idx = i
+                            best_action_list = []
+                            best_action_list.append(i)
                             max_dist = dist
+                        elif max_dist == dist:
+                            best_action_list.append(i)
+                    if len(best_action_list) > 1:
+                        weights = self.weight_transport(
+                            [valid_moves[j][2:] for j in best_action_list]
+                        )
+                    else:
+                        weights = [1]
+                    best_action_idx = random.choices(
+                        best_action_list, weights=weights, k=1
+                    )[0]
                     self.mrX[0] = valid_moves[best_action_idx][1]
                     self.mrX_transport = np.array(valid_moves[best_action_idx][2:])
                 else:
-                    chosen_move = random.choice(valid_moves)
+                    chosen_move = random.choices(valid_moves, k=1)[0]
                     self.mrX[0] = chosen_move[1]
                     self.mrX_transport = np.array(chosen_move[2:])
             else:
@@ -140,6 +158,24 @@ class ScotlandYard(gym.Env):
             self.skip_turn()
 
             return self.state, self.reward, self.done, False, {}
+
+    def exponential_weighted_distance_mrX(self, valid_moves):
+        weights = np.array([self.min_shortest_path(valid_moves[i][1])**4 for i in range(valid_moves.shape[0])])
+        return weights / weights.sum()
+
+    def weight_transport(self, transport_list: np.ndarray[int]) -> np.ndarray[float]:
+        """ Properly weight transports. Walking has larger weight than taking the bicycle, than taking the boat.
+
+        Args:
+            transport_list: List of the one hot encoding of the transports that mrX can take.
+
+        Returns:
+            The weighted transport list.
+        """
+        weights = np.array([1, 2, 4])
+        transports_weights = np.array([np.dot(transport, weights) for transport in transport_list])
+
+        return transports_weights / transports_weights.sum()
 
     def action_masks(self) -> np.ndarray[int]:
         """Generate the masked array for actions to be used at each sub turn.
@@ -307,6 +343,29 @@ class ScotlandYard(gym.Env):
                 md = d
         return md
 
+    def init_from_positions(self, detectives: list[int], mrX: int):
+        new_start_nodes = [mrX]
+        new_start_nodes.extend(detectives)
+        self.starting_nodes = np.array(new_start_nodes)
+
+        initial_state = (
+            np.array(
+                [
+                    utils.graph_util.node_one_hot_encoding(
+                        node_id=node, num_nodes=self.G.number_of_nodes()
+                    )
+                    for node in self.starting_nodes
+                ]
+            )
+            .flatten()
+            .tolist()
+        )
+        initial_state += [0, 0, 0]
+        self.state = np.array(initial_state)
+        self.mrX = np.array([self.starting_nodes[0]])
+        for i in range(self.num_detectives):
+            self.detectives[i] = self.starting_nodes[i + 1]
+
     def render(self):
         plt.clf()
         plt.imshow(self.img)
@@ -375,13 +434,13 @@ if __name__ == "__main__":
         num_detectives = 3
         num_nodes = 21
         max_turns = 10
-        reveal_every = 3
-        n_envs = 8
-        timesteps = 1024
-        total_steps = n_envs * max_turns * timesteps * 64
+        reveal_every = 0
+        n_envs = 16
+        timesteps = 2**12
+        total_steps = 30e6
 
         obs = "NO_OBS" if reveal_every == 0 else f"OBS_EVERY_{reveal_every}"
-        model_name = f"Masked_PPO_SY_{obs}_{(total_steps/1e6):.3f}M_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode"
+        model_name = f"Masked_PPO_SY_{obs}_{(total_steps/1e6):.3f}M_{max_turns}turns_{num_detectives}detectives_smarterMRX_finetuned"
         models_dir = f"/home/anagen/students/nodm/main_spt9u/units/main/anagen/bassoda/TSBG/models/SB3_detectives/{model_name}"
 
         kwargs = {
@@ -407,8 +466,17 @@ if __name__ == "__main__":
         )
 
         model = MaskablePPO(
-            "MlpPolicy", vec_env, verbose=1, n_steps=timesteps, n_epochs=32, batch_size=32
+            "MlpPolicy",
+            vec_env,
+            verbose=1,
+            gamma=0.9995,
+            learning_rate=3.7e-4,
+            ent_coef=6.453e-3,
+            n_steps=timesteps,
+            n_epochs=4,
+            batch_size=64,
         )
+
         # model = MaskablePPO.load(f"models/SB3_detectives/Masked_PPO_SY_NO_OBS_500k_{max_turns}turns_{num_detectives}detectives_smartMRX_randomStartEachEpisode")
         # model.set_env(env)
         # # # model = PPO("MlpPolicy", env, verbose=1, n_steps=5000, n_epochs=1)
@@ -417,7 +485,9 @@ if __name__ == "__main__":
         # # # # evaluate_policy(model, env, n_eval_episodes=1, render=False)
 
         model.learn(
-            total_timesteps=total_steps, reset_num_timesteps=False, callback=eval_callback
+            total_timesteps=total_steps,
+            reset_num_timesteps=False,
+            callback=eval_callback,
         )
         model.save(models_dir + "/final_model.zip")
 
@@ -457,7 +527,7 @@ if __name__ == "__main__":
         )
 
         model = MaskablePPO.load(
-            "/home/anagen/students/nodm/main_spt9u/units/main/anagen/bassoda/TSBG/models/SB3_detectives/Masked_PPO_SY_OBS_EVERY_3_0.655M_10turns_3detectives_smartMRX_randomStartEachEpisode/final_model.zip",
+            "/home/anagen/students/nodm/main_spt9u/units/main/anagen/bassoda/TSBG/models/SB3_detectives/Masked_PPO_SY_OBS_EVERY_3_30.000M_10turns_3detectives_smarterMRX_finetuned/final_model.zip",
             env=vec_env,
         )
 
@@ -470,14 +540,14 @@ if __name__ == "__main__":
         print("Run\tD_wins\tX_wins\n")
         for i in range(num_tests):
             done = False
-            obs = vec_env.reset()
-            # env.render()
+            obs, _ = test_env.reset()
+            # test_env.render()
             while not done:
                 # print(f"before step {obs}")
                 action_masks = get_action_masks(test_env)
                 action, _ = model.predict(obs, action_masks=action_masks)
                 obs, reward, done, truncated, info = test_env.step(action)
-            # test_env.render()
+                # test_env.render()
             if reward < 0:
                 countX += 1
             elif reward > 0:

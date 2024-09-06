@@ -1,23 +1,53 @@
-import PySimpleGUI as sg
+import tkinter as tk
+from tkinter import ttk
+from tkinter.font import Font
 from PIL import Image, ImageTk
 import random
-import sys
-
-from logic import Game
-
+from rl_logic import RLGame as Game
 
 class ScotlandYardGUI:
     def __init__(self):
-        self.window = None
-        self.screen_width, self.screen_height = sg.Window.get_screen_size()
-        self.marco_last_loc = None
+        self.game = None
+        self.counter = 0
+        self.window = tk.Tk()
+        self.screen_width = self.window.winfo_screenwidth()
+        self.screen_height = self.window.winfo_screenheight()
+        self.main_font = Font(family='Tahoma', size=13, weight='bold')
         self.detective_starting_loc = None
+        self.w_factor = self.screen_width * 1.1 / 2560
+        self.h_factor = self.screen_height * 1.1 / 1440
+        self.loc_list=[(225, 100),  #  1
+            (311, 189),             #  2
+            (412, 205),             #  3
+            (515, 295),             #  4
+            (556, 425),             #  5
+            (505, 133),             #  6
+            (650, 285),             #  7
+            (675, 459),             #  8
+            (563, 530),             #  9
+            (436, 735),             # 10
+            (635, 80),              # 11
+            (730, 336),             # 12
+            (735, 580),             # 13
+            (802, 205),             # 14
+            (826, 300),             # 15
+            (875, 488),             # 16
+            (710, 740),             # 17
+            (852, 60),              # 18
+            (940, 220),             # 19
+            (1012, 550),            # 20
+            (940, 675)]             # 21
+        for i in range(len(self.loc_list)):
+            self.loc_list[i] = (int(self.w_factor*self.loc_list[i][0]), int(0.7*0.88*self.screen_height) - int(self.h_factor*self.loc_list[i][1]))
 
     def create_window(self):
-        window_width = int(self.screen_width * 0.8)
-        window_height = int(self.screen_height * 0.8)
+        window_width = int(self.screen_width * 0.88)
+        window_height = int(self.screen_height * 0.88)
+        self.window.geometry(str(window_width)+"x"+str(window_height))
+        self.window.title("La fuga di Marco")
+        self.window.resizable(False, False)
 
-        marco_img = Image.open('./img/marco.gif')
+        marco_img = Image.open('./img/marco.jpg')
         alpha_marco = marco_img.size[0]/marco_img.size[1]
         img_size_marco = (int(0.7*window_height*alpha_marco), int(0.7*window_height))
         marco_img = marco_img.resize(img_size_marco)
@@ -29,171 +59,259 @@ class ScotlandYardGUI:
 
         win_img = Image.open('./img/thug_life.jpg')
         alpha_win = win_img.size[0]/win_img.size[1]
-        img_size_win = (int(0.7*window_height*alpha_win), int(0.7*window_height))
+        img_size_win = (int(0.6*window_height*alpha_win), int(0.6*window_height))
         win_img = win_img.resize(img_size_win)
 
         lose_img = Image.open('./img/captured.jpg')
         alpha_lose = lose_img.size[0]/lose_img.size[1]
-        img_size_lose = (int(0.7*window_height*alpha_lose), int(0.7*window_height))
+        img_size_lose = (int(0.6*window_height*alpha_lose), int(0.6*window_height))
         lose_img = lose_img.resize(img_size_lose)
 
-        marco_img_data = ImageTk.PhotoImage(marco_img)
-        mappa_img_data = ImageTk.PhotoImage(mappa_img)
-        win_img_data = ImageTk.PhotoImage(win_img)
-        lose_img_data = ImageTk.PhotoImage(lose_img)
+        self.marco_img_data = ImageTk.PhotoImage(marco_img)
+        self.win_img_data = ImageTk.PhotoImage(win_img)
+        self.lose_img_data = ImageTk.PhotoImage(lose_img)
+        self.mappa_img_data = ImageTk.PhotoImage(mappa_img)
+        self.pos_r = int(img_size_mappa[1]/37)
 
-        start_txt ="Il pinguino Marco deve scappare dai dipendenti dell'acquario di Trieste\nper ottenere pesce extra dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il delfino verde. Scegli le tue mosse per non farti acchiappare!"
-        initial_layout = [
-            [sg.Text(start_txt, size=(img_size_marco[0], 4), font='Tahoma 13 bold',  key='-GAME_DESCRIPTION-')],
-            [sg.Image(key='-MARCO-', size = img_size_marco)],
-            [sg.Button("Inizia a giocare!", key='-START-', font='Tahoma 13 bold', size=(20, 5))]
-        ]
+        start_txt ="Il pinguino Marco deve scappare dai guardiani dell'acquario di Trieste\nper ottenere pesce dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
+        self.initial_layout = tk.Frame(self.window, width=window_width, height=window_height)
+        tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 7))
+        tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=3, sticky="w", pady=7)
+        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, sticky="w", pady=7)
+        self.mode_select = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
+        self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
+        self.mode_select.current(0)
+        self.mode_select.grid(row=2, column=1)
+        self.show_infoSet = tk.IntVar()
+        self.show_infoSet.set(0)
+        self.infoSet_checkbox = tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet)
+        self.infoSet_checkbox.grid(row=2, column=2)
+        self.initial_layout.pack()
 
-        pre_game_layout = [
-            [sg.Image(key='-MAPPA_PREGAME-', size=img_size_mappa)],
-            [sg.Text('', font='Tahoma 13 bold', key='-D1_START_LOCATION-')],
-            [sg.Text('', font='Tahoma 13 bold',  key='-D2_START_LOCATION-')],
-            [sg.Text('', font='Tahoma 13 bold',  key='-D3_START_LOCATION-')],
-            [sg.Text('Inserisci la posizione iniziale di Marco:', font='Tahoma 13 bold', key='-MARCO_LOCATION-'),
-             sg.Input('', enable_events=True, key='-MARCO_LOC_INPUT-', font=('Arial Bold', 20), justification='left', size=(5,1))],
-            [sg.Button('Ok', key='-OK_POSITION-', font='Tahoma 13 bold', size=(10, 2))]
-        ]
+        self.pre_game_layout = tk.Frame(self.window, width=window_width, height=window_height)
+        self.canvas = tk.Canvas(self.pre_game_layout, width=img_size_mappa[0], height=img_size_mappa[1])
+        self.canvas.bind("<Button-1>", self.click_on_pos)
+        self.canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
+        self.pre_game_pos = (self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
+        self.canvas.grid(row=0, column=0, sticky="w", pady=(14, 7))
+        self.pre_game_labels = (tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.pre_game_layout, text="Clicka sulla posizione iniziale di Marco", font=self.main_font, justify="left"))
+        for i in range(4):
+            self.pre_game_labels[i].grid(row=i+1, column=0, sticky="w")
 
-        game_layout = [
-            [sg.Image(key='-MAPPA-', size=img_size_mappa), sg.Text("Turn 1", key='-COUNTER-', font='Tahoma 13 bold', justification='right', size=(10,1))],
-            [sg.Text('', font='Tahoma 13 bold',  key='-D1_LOCATION-')],
-            [sg.Text('', font='Tahoma 13 bold', key='-D2_LOCATION-')],
-            [sg.Text('', font='Tahoma 13 bold', key='-D3_LOCATION-')],
-            [sg.Text('', font='Tahoma 13 bold', key='-MARCO_LOCATION_TXT-')],
-            [sg.Button('Bicicletta', key='-BICI-', button_color='deep sky blue', font='Tahoma 13 bold', size=(20, 5)),
-             sg.Button('Autobus', key='-BUS-', button_color='red', font='Tahoma 13 bold', size=(20, 5)),
-             sg.Button('Delfino verde', key='-DELFINO-', button_color='green3', font='Tahoma 13 bold', size=(20, 5)),
-             sg.Button('CATTURATO!', key='-CATTURATO-', font='Tahoma 13 bold', size=(20, 5))]
-        ]
+        self.game_layout = tk.Frame(self.window, width=window_width, height=window_height)
+        self.map_canvas = tk.Canvas(self.game_layout, width=img_size_mappa[0], height=img_size_mappa[1])
+        self.map_canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
+        self.game_pos = (self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
+        self.infoSet = []
+        for i in range(21):
+            self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
+        self.map_canvas.grid(row=0, column=0, columnspan=4, sticky="w", pady=(14, 7))
+        self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=25),
+            tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.game_layout, text="", font=self.main_font, justify="left"))
+        self.game_labels[0].grid(row=0, column=4, padx=7)
+        for i in range(1,5):
+            self.game_labels[i].grid(row=i, column=0, columnspan=4, sticky="w")
+        self.game_buttons = (tk.Button(self.game_layout, text="", font=self.main_font, width=20, height=3, background='deep sky blue', command=lambda:self.click_move('cart')),
+            tk.Button(self.game_layout, text="", font=self.main_font, width=20, height=3, background='red', command=lambda:self.click_move('tram')),
+            tk.Button(self.game_layout, text="", font=self.main_font, width=20, height=3, background='green3', command=lambda:self.click_move('boat')),
+            tk.Button(self.game_layout, text="CATTURATO!", font=self.main_font, width=20, height=3, background='lightgray', command=lambda:self.switch_to_endgame(False)))
+        for i in range(4):
+            self.game_buttons[i].grid(row=5, column=i, sticky="w", pady=7)
 
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
-
-        win_layout = [
-            [sg.Text(win_txt, size=(img_size_marco[0], 4), font='Tahoma 13 bold',  key='-WIN_DESCRIPTION-')],
-            [sg.Image(key='-WIN_IMG-', size = img_size_win)],
-            [sg.Button("Ricomincia", key='-WIN_RESTART-', font='Tahoma 13 bold', size=(20, 5))]
-        ]
+        self.win_layout = tk.Frame(self.window, width=window_width, height=window_height)
+        tk.Label(self.win_layout, text=win_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14,7))
+        tk.Label(self.win_layout, image=self.win_img_data).grid(row=1, column=0, columnspan=2, sticky="w", pady=7)
+        tk.Button(self.win_layout, text="Ricomincia", font=self.main_font, width=20, height=2, background='lightsteelblue', command=lambda:self.restart_layout(True)).grid(row=2, column=0, sticky="w", pady=10)
 
         lose_txt = "Oh no, sei stato catturato! Si ritorna all'acquario!"
+        self.lose_layout = tk.Frame(self.window, width=window_width, height=window_height)
+        tk.Label(self.lose_layout, text=lose_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 0))
+        self.path_labels = (tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
+            tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"))
+        for i in range(4):
+            self.path_labels[i].grid(row=i+1, column=0, columnspan=2, sticky="w")
+        tk.Label(self.lose_layout, image=self.lose_img_data).grid(row=5, column=0, columnspan=2, sticky="w", pady=7)
+        tk.Button(self.lose_layout, text="Ricomincia", font=self.main_font, width=20, height=2, background='lightsteelblue', command=lambda:self.restart_layout(False)).grid(row=6, column=0, sticky="w", pady=7)
 
-        lose_layout = [
-            [sg.Text(lose_txt, size=(img_size_marco[0], 4), font='Tahoma 13 bold',  key='-LOSE_DESCRIPTION-')],
-            [sg.Image(key='-LOSE_IMG-', size = img_size_lose)],
-            [sg.Button("Ricomincia", key='-LOSE_RESTART-', font='Tahoma 13 bold', size=(20, 5))]
-        ]
+    def create_circle(self, canv, x, y, r, color):
+        return canv.create_oval(x-r, y-r, x+r, y+r, fill=None, outline=color, width=4)
 
-        layout = [[sg.Column(initial_layout, key='-IN_LAYOUT-'),
-                  sg.Column(game_layout, visible=False, key='-GAME_LAYOUT-'),
-                  sg.Column(pre_game_layout, visible=False, key='-PRE_GAME_LAYOUT-'),
-                  sg.Column(win_layout, visible=False, key='-WIN_LAYOUT-'),
-                  sg.Column(lose_layout, visible=False, key='-LOSE_LAYOUT-')]
-                  ]
-        self.window = sg.Window("La fuga di Marco", layout, size=(window_width, window_height), element_justification='c', finalize=True)
-        self.window['-MARCO-'].update(data=marco_img_data)
-        self.window['-MAPPA-'].update(data=mappa_img_data)
-        self.window['-MAPPA_PREGAME-'].update(data=mappa_img_data)
-        self.window['-WIN_IMG-'].update(data=win_img_data)
-        self.window['-LOSE_IMG-'].update(data=lose_img_data)
+    def nearest_loc(self, x, y):
+        dist = 1050    # initially: max acceptable distance
+        loc = None
+        for i in range(len(self.loc_list)):
+            new_dist = ((self.loc_list[i][0]-x)/self.w_factor)**2 + ((self.loc_list[i][1]-y)/self.h_factor)**2
+            if new_dist < dist:
+                dist = new_dist
+                loc = i+1
+        return loc
+
+    def click_on_pos(self, event):
+        mrx_starting_loc = self.nearest_loc(event.x, event.y)
+        if mrx_starting_loc:
+            self.switch_to_game_layout(mrx_starting_loc)
+
+    def click_move(self, move):
+        if self.counter == 10:
+            self.switch_to_endgame(True)
+        else:
+            if self.mode_select.current()==1:
+                if move=='cart':
+                    self.tickets[0] -= 1
+                elif move=='tram':
+                    self.tickets[1] -= 1
+                elif move=='boat':
+                    self.tickets[2] -= 1
+            self.update_marco_path(move)
+            new_detective_loc, found = self.game.playTurn(move)
+            if new_detective_loc:
+                self.update_detective(new_detective_loc)
+                self.counter += 1
+                self.update_counters()
+            else:
+                self.switch_to_endgame(False)
+            if found:
+                self.game_buttons[0].configure(text="Bicicletta", state='disabled')
+                self.game_buttons[1].configure(text="Autobus", state='disabled')
+                self.game_buttons[2].configure(text="Traghetto", state='disabled')
+                for i in range(3):
+                    self.game_buttons[i].update()
+            if self.show_infoSet.get():
+                self.update_infoSet(self.game.getMrXPos())
+
+    def update_infoSet(self, infoS):
+            for i in range(21):
+                if i+1 in infoS:
+                    self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
+                else:
+                    self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
 
     def switch_to_pre_game_layout(self):
-        self.window['-IN_LAYOUT-'].update(visible=False)
-        self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
+        detective_loc = random.sample(range(1, 22), 3)
+        self.set_detective_starting_loc(detective_loc)
+        self.update_infoSet([])
+        self.initial_layout.pack_forget()
+        self.pre_game_layout.pack()
 
     def switch_to_game_layout(self, marco_starting_pos):
-        self.window['-MARCO_LOCATION_TXT-'].update('Posizione iniziale di Marco: '+ str(marco_starting_pos))
-        self.window['-PRE_GAME_LAYOUT-'].update(visible=False)
-        self.window['-GAME_LAYOUT-'].update(visible=True)
-
-    def switch_to_endgame(self, user_win):
-        if user_win:
-            self.window['-GAME_LAYOUT-'].update(visible=False)
-            self.window['-WIN_LAYOUT-'].update(visible=True)
+        self.counter = 0
+        self.game = Game()
+        self.game.initGame(self.detective_starting_loc, marco_starting_pos)
+        if self.show_infoSet.get():
+            self.update_infoSet(self.game.getMrXPos())
+        self.game_labels[0].configure(text='Turno 1')
+        self.game_labels[4].configure(text='Posizione iniziale di Marco:  '+str(marco_starting_pos))
+        self.path_labels[3].configure(text='Percorso di Marco:  '+str(marco_starting_pos))
+        if self.mode_select.current()==1:
+            self.tickets = [8,5,3]
+            self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal')
+            self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal')
+            self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal')
         else:
-            self.window['-GAME_LAYOUT-'].update(visible=False)
-            self.window['-LOSE_LAYOUT-'].update(visible=True)
+            self.tickets = None
+            self.game_buttons[0].configure(text="Bicicletta", state='normal')
+            self.game_buttons[1].configure(text="Autobus", state='normal')
+            self.game_buttons[2].configure(text="Traghetto", state='normal')
+        for i in range(3):
+            self.game_buttons[i].update()
+        self.game_labels[0].update()
+        self.game_labels[4].update()
+        self.path_labels[3].update()
+        self.pre_game_layout.pack_forget()
+        self.game_layout.pack()
 
+    def switch_to_endgame(self, win):
+        self.game_layout.pack_forget()
+        if win:
+            self.win_layout.pack()
+        else:
+            self.lose_layout.pack()
 
     def set_detective_starting_loc(self, detective_loc):
-        self.window['-D1_START_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_START_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
-        self.window['-D3_START_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
-        self.window['-D1_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
-        self.window['-D3_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
         self.detective_starting_loc=detective_loc
+        self.pre_game_labels[0].configure(text='Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
+        self.pre_game_labels[1].configure(text='Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
+        self.pre_game_labels[2].configure(text='Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        self.game_labels[1].configure(text='Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
+        self.game_labels[2].configure(text='Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
+        self.game_labels[3].configure(text='Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        self.path_labels[0].configure(text='Percorso del Guardiano A:  ' + (str(detective_loc[0]) if detective_loc[0]>9 else (' '+str(detective_loc[0])+' ')))
+        self.path_labels[1].configure(text='Percorso del Guardiano B:  ' + (str(detective_loc[1]) if detective_loc[1]>9 else (' '+str(detective_loc[1])+' ')))
+        self.path_labels[2].configure(text='Percorso del Guardiano C:  ' + (str(detective_loc[2]) if detective_loc[2]>9 else (' '+str(detective_loc[2])+' ')))
+        for i in range(3):
+            self.pre_game_labels[i].update()
+            self.game_labels[i+1].update()
+            self.path_labels[i].update()
+        for idx,x in enumerate(detective_loc):
+            self.canvas.moveto(self.pre_game_pos[idx], self.loc_list[x-1][0]-self.pos_r-2, self.loc_list[x-1][1]-self.pos_r-2)
+            self.map_canvas.moveto(self.game_pos[idx], self.loc_list[x-1][0]-self.pos_r-2, self.loc_list[x-1][1]-self.pos_r-2)
 
     def update_detective(self, detective_loc):
-        self.window['-D1_LOCATION-'].update('Detective 1: '+ str(detective_loc[0]))
-        self.window['-D2_LOCATION-'].update('Detective 2: '+ str(detective_loc[1]))
-        self.window['-D3_LOCATION-'].update('Detective 3: '+ str(detective_loc[2]))
+        for i in range(3):
+            new = ' --> ' + (str(detective_loc[i]) if detective_loc[i]>9 else (' '+str(detective_loc[i])+' '))
+            prev = self.game_labels[i+1]['text']
+            self.game_labels[i+1].configure(text=prev + new)
+            prev = self.path_labels[i]['text']
+            self.path_labels[i].configure(text=prev + new)
+        for i in range(3):
+            self.game_labels[i+1].update()
+            self.path_labels[i].update()
+        for idx,x in enumerate(detective_loc):
+            self.map_canvas.moveto(self.game_pos[idx], self.loc_list[x-1][0]-self.pos_r-2, self.loc_list[x-1][1]-self.pos_r-2)
 
-    def update_counter(self, counter):
-        self.window['-COUNTER-'].update('Turn ' + str(counter))
+    def update_marco_path(self, move):
+        if move=='cart':
+            transport = 'bici'
+        elif move=='tram':
+            transport = 'bus'
+        else:
+            transport = 'nave'
+        prev = self.game_labels[4]['text']
+        self.game_labels[4].configure(text=prev + ' -- ' + transport)
+        prev = self.path_labels[3]['text']
+        self.path_labels[3].configure(text=prev + ' -- ' + transport)
+        self.game_labels[4].update()
+        self.path_labels[3].update()
+
+    def update_counters(self):
+        if self.counter == 10:
+            self.game_labels[0].configure(text='Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
+            if self.mode_select.current()==1:
+                self.game_buttons[0].configure(text="Bicicletta", state='normal')
+                self.game_buttons[1].configure(text="Autobus", state='normal')
+                self.game_buttons[2].configure(text="Traghetto", state='normal')
+                for i in range(3):
+                    self.game_buttons[i].update()
+        else:
+            self.game_labels[0].configure(text='Turno ' + str(self.counter+1))
+            if self.mode_select.current()==1:
+                self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal' if self.tickets[0] else 'disabled')
+                self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal' if self.tickets[1] else 'disabled')
+                self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal' if self.tickets[2] else 'disabled')
+                for i in range(3):
+                    self.game_buttons[i].update()
+        self.game_labels[0].update()
 
     def restart_layout(self, win):
         if win:
-            self.window['-WIN_LAYOUT-'].update(visible=False)
+            self.win_layout.pack_forget()
         else:
-            self.window['-LOSE_LAYOUT-'].update(visible=False)
-        self.window['-PRE_GAME_LAYOUT-'].update(visible=True)
+            self.lose_layout.pack_forget()
+        self.initial_layout.pack()
+
+    def mainloop(self):
+        self.window.mainloop()
 
 if __name__ == "__main__":
     game_gui = ScotlandYardGUI()
     game_gui.create_window()
-    counter = 0
-    game = None
-    event2move_dict = {'-BICI-':'cart', '-BUS-':'tram', '-DELFINO-':'boat'}
-    while True:
-        event, values = game_gui.window.read()
-
-        if event == sg.WINDOW_CLOSED:
-            break
-
-        elif event == '-START-':
-            detective_loc = random.sample(range(1, 22), 3)
-            game_gui.set_detective_starting_loc(detective_loc)
-            game_gui.switch_to_pre_game_layout()
-
-        elif event == '-OK_POSITION-':
-            pos = ''
-            for x in values['-MARCO_LOC_INPUT-']:
-                pos += x
-            mrx_starting_loc = int(pos)
-            if mrx_starting_loc not in range(1,22):
-                sg.popup("Posizione iniziale non valida!")
-                game_gui.window['-MARCO_LOC_INPUT-'].update(values['-MARCO_LOC_INPUT-'][:-1])
-            else:
-                game = Game()
-                game.initGame(detectives=game_gui.detective_starting_loc, mrX=mrx_starting_loc)
-                game_gui.switch_to_game_layout(mrx_starting_loc)
-
-
-        elif event in ['-BICI-', '-BUS-', '-DELFINO-']:
-            if counter >= 9:
-                game_gui.switch_to_endgame(user_win=True)
-            move = event2move_dict[event]
-            new_detective_loc = game.playTurn(move)
-            game_gui.update_detective(new_detective_loc)
-            counter += 1
-            game_gui.update_counter(counter=counter+1)
-
-        elif event == '-CATTURATO-':
-            game_gui.switch_to_endgame(user_win=False)
-
-        elif event == '-WIN_RESTART-':
-            detective_loc = random.sample(range(1, 22), 3)
-            counter=0
-            game_gui.set_detective_starting_loc(detective_loc)
-            game_gui.restart_layout(win=True)
-        elif event == '-LOSE_RESTART-':
-            detective_loc = random.sample(range(1, 22), 3)
-            counter=0
-            game_gui.set_detective_starting_loc(detective_loc)
-            game_gui.restart_layout(win=False)
-
-    game_gui.window.close()
+    game_gui.mainloop()

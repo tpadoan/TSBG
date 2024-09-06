@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-from stable_baselines3 import PPO, A2C, DQN
-from sb3_contrib.common.wrappers import ActionMasker
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv
 from sb3_contrib.ppo_mask import MaskablePPO
 from sb3_contrib.common.maskable.utils import get_action_masks
 
@@ -17,7 +16,7 @@ movesNames = ["boat", "tram", "cart"]
 # maximum number of turns to catch mr.X
 maxTurns = 10
 # turns when mr.X location is revealed to the detectives
-reveals = [1] + [i for i in range(4, maxTurns + 1, 3)]
+reveals = [0]
 # number of detectives
 numDetectives = 3
 # flag for fixed initial positions of players, only working if numDetectives < 4
@@ -136,18 +135,34 @@ def propagate(state, move):
 
 
 max_turns = 10
-detectives_model = MaskablePPO.load(
-    f"models/SB3_detectives/Masked_PPO_SY_POMDP_500k_{max_turns}turns_{numDetectives}detectives_smartMRX_randomStartEachEpisode"
-)
-env_SY = ScotlandYard(
-    random_start=True, num_detectives=numDetectives, max_turns=max_turns
-)
-env = ActionMasker(env_SY, mask_fn)
-detectives_model.set_env(env)
 
-mrX = env.starting_nodes[0]
+kwargs = {
+    "random_start": True,
+    "num_detectives": numDetectives,
+    "max_turns": max_turns,
+    "reveal_every": 0,
+}
+
+vec_env = make_vec_env(
+    ScotlandYard,
+    n_envs=1,
+    env_kwargs=kwargs,
+    vec_env_cls=DummyVecEnv,
+)
+
+test_env = ScotlandYard(
+    random_start=True, num_detectives=numDetectives, max_turns=max_turns, reveal_every=0
+)
+
+detectives_model = MaskablePPO.load(
+    "/home/anagen/students/nodm/main_spt9u/units/main/anagen/bassoda/TSBG/models/SB3_detectives/Masked_PPO_SY_NO_OBS_10.486M_10turns_3detectives_smarterMRX/final_model.zip",
+    env=vec_env,
+)
+
+
+mrX = test_env.starting_nodes[0]
 tlog = [[0, 0, 0]] * maxTurns
-state = [env.starting_nodes[1:], mrX, tlog, {mrX}]
+state = [test_env.starting_nodes[1:], mrX, tlog, {mrX}]
 drawMap(state, "Omo Vespa")
 
 turn = 0
@@ -176,16 +191,20 @@ while turn < maxTurns and not found:
     if state[1] in state[0]:
         found = True
 
-    env_SY.turn_sub_counter += 1
+    test_env.turn_sub_counter += 1
     for i in range(numDetectives):
+      # mrX one hot encoding
         observation = (
             nodes_ohe(state[3]) if turn in reveals else nodes_ohe({-1})
         )  # + [1 if j==i else 0 for j in range(numDetectives)]
+        # detectives one hot encoding
         for ohe in [node_ohe(state[0][j]) for j in range(numDetectives)]:
             observation.extend(ohe)
-        action_masks = get_action_masks(env)
+        # transport one hot encoding
+        observation.extend(transport_ohe(move))
+        action_masks = get_action_masks(test_env)
         action, _ = detectives_model.predict(observation, action_masks=action_masks)
-        obs, reward, done, truncated, info = env.step(action)
+        _, reward, done, truncated, info = test_env.step(action)
         drawMap(state, f"Detective {i+1}")
         plt.pause(2)
         state[0][i] = action + 1
