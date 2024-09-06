@@ -4,7 +4,6 @@ from tkinter.font import Font
 from PIL import Image, ImageTk
 import random
 from logic import Game
-from rl_logic import RLGame
 
 class ScotlandYardGUI:
     def __init__(self):
@@ -209,7 +208,7 @@ class ScotlandYardGUI:
 
     def switch_to_game_layout(self, marco_starting_pos):
         self.counter = 0
-        self.game = RLGame() if self.detective_mode.current()==0 else Game()
+        self.game = Game(use_RL = True if self.detective_mode.current()==0 else False)
         self.game.initGame(self.detective_starting_loc, marco_starting_pos)
         if self.show_infoSet.get():
             self.update_infoSet(self.game.getMrXPos())
