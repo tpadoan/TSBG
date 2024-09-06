@@ -72,7 +72,7 @@ class Game:
       new[node] = prob/tot
     self.state[1] = new
 
-  # returns a tuple: (list[int]: new detectives' positions, bool: wether mrX has been caught)
+  # returns a tuple: (list[int]: new detectives' positions, bool: wether mrX has been caught for sure)
   def playTurn(self, mrXmove: str):
     self.propagateProb(mrXmove)
     if not len(self.state[1]):
