@@ -70,7 +70,7 @@ class Game:
         else:
             self.sy_env.reset()
             self.sy_env.init_from_positions(detectives, mrX)
-            self.state = [detectives, mrX]
+            self.state = [detectives, {mrX: 1.0}]
 
     def getMrXPos(self):
         return self.state[1].keys()
@@ -116,8 +116,8 @@ class Game:
         self.state[1] = new
 
     def playTurn(self, mrXmove: str):
+        self.propagateProb(mrXmove)
         if not self.use_RL:
-            self.propagateProb(mrXmove)
             if not len(self.state[1]):
                 return (None, True)
             for i in range(self.numDetectives):
