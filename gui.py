@@ -5,9 +5,9 @@ from PIL import Image, ImageTk
 import random
 from logic import Game
 
-class ScotlandYardGUI:
+class GameGUI:
     def __init__(self):
-        self.game = None
+        self.game = Game()
         self.counter = 0
         self.window = tk.Tk()
         self.screen_width = self.window.winfo_screenwidth()
@@ -77,11 +77,15 @@ class ScotlandYardGUI:
         self.initial_layout = tk.Frame(self.window, width=window_width, height=window_height)
         tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 7))
         tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=3, sticky="w", pady=7)
-        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, sticky="w", pady=7)
+        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, rowspan=2, sticky="w", pady=7)
         self.mode_select = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
         self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
         self.mode_select.current(0)
         self.mode_select.grid(row=2, column=1)
+        self.detective_ai = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
+        self.detective_ai['values'] = ('Contro agenti di Reinforcement Learning', 'Contro agenti probabilistici')
+        self.detective_ai.current(0)
+        self.detective_ai.grid(row=3, column=1)
         self.show_infoSet = tk.IntVar()
         self.show_infoSet.set(0)
         self.infoSet_checkbox = tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet)
@@ -204,8 +208,7 @@ class ScotlandYardGUI:
 
     def switch_to_game_layout(self, marco_starting_pos):
         self.counter = 0
-        self.game = Game()
-        self.game.initGame(self.detective_starting_loc, marco_starting_pos)
+        self.game.initGame(self.detective_starting_loc, marco_starting_pos, not bool(self.detective_ai.current()))
         if self.show_infoSet.get():
             self.update_infoSet(self.game.getMrXPos())
         self.game_labels[0].configure(text='Turno 1')
@@ -307,11 +310,11 @@ class ScotlandYardGUI:
         else:
             self.lose_layout.pack_forget()
         self.initial_layout.pack()
-    
+
     def mainloop(self):
         self.window.mainloop()
 
 if __name__ == "__main__":
-    game_gui = ScotlandYardGUI()
+    game_gui = GameGUI()
     game_gui.create_window()
     game_gui.mainloop()
