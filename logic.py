@@ -72,12 +72,14 @@ class Game:
       new[node] = prob/tot
     self.state[1] = new
 
+  # returns a tuple: (list[int]: new detectives' positions, bool: wether mrX has been caught for sure)
   def playTurn(self, mrXmove: str):
     self.propagateProb(mrXmove)
     if not len(self.state[1]):
       return (None, True)
     for i in range(self.numDetectives):
       if self.canMove(i):
+        # TODO: next few lines should be encapsuled in a separated new method, so that it can behave differently depending on the chosen model
         x = choice(list(self.state[1].keys()), p=list(self.state[1].values()))
         self.state[0][i] = self.Pi[self.turn][i+1][tuple((self.state[0][k-1] if k>0 else x for k in range(self.numDetectives+1)))]
         diff = self.state[1].pop(self.state[0][i], False)
