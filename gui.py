@@ -10,6 +10,7 @@ class GameGUI:
         self.game = Game()
         self.counter = 0
         self.window = tk.Tk()
+        self.window.attributes('-fullscreen',True)
         self.screen_width = self.window.winfo_screenwidth()
         self.screen_height = self.window.winfo_screenheight()
         self.main_font = Font(family='Tahoma', size=13, weight='bold')
@@ -46,6 +47,7 @@ class GameGUI:
         self.window.geometry(str(window_width)+"x"+str(window_height))
         self.window.title("La fuga di Marco")
         self.window.resizable(False, False)
+        tk.Button(self.window, text=' X ', background='red', command=self.quit).pack(side="top", anchor="ne")
 
         marco_img = Image.open('./img/marco.jpg')
         alpha_marco = marco_img.size[0]/marco_img.size[1]
@@ -75,17 +77,17 @@ class GameGUI:
 
         start_txt ="Il pinguino Marco deve scappare dai guardiani dell'acquario di Trieste\nper ottenere pesce dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
         self.initial_layout = tk.Frame(self.window, width=window_width, height=window_height)
-        tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 7))
+        tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 7))
         tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=3, sticky="w", pady=7)
-        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=20, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, rowspan=2, sticky="w", pady=7)
+        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=10, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, rowspan=2, sticky="w", pady=7)
         self.mode_select = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
         self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
         self.mode_select.current(0)
-        self.mode_select.grid(row=2, column=1)
+        self.mode_select.grid(row=2, column=1, padx=16)
         self.detective_ai = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
-        self.detective_ai['values'] = ('Contro agenti di Reinforcement Learning', 'Contro agenti probabilistici')
+        self.detective_ai['values'] = ('Contro agenti di RL', 'Contro agenti probabilistici')
         self.detective_ai.current(0)
-        self.detective_ai.grid(row=3, column=1)
+        self.detective_ai.grid(row=3, column=1, padx=16)
         self.show_infoSet = tk.IntVar()
         self.show_infoSet.set(0)
         self.infoSet_checkbox = tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet)
@@ -97,7 +99,7 @@ class GameGUI:
         self.canvas.bind("<Button-1>", self.click_on_pos)
         self.canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
         self.pre_game_pos = (self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
-        self.canvas.grid(row=0, column=0, sticky="w", pady=(14, 7))
+        self.canvas.grid(row=0, column=0, sticky="w", pady=(0, 7))
         self.pre_game_labels = (tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
@@ -112,7 +114,7 @@ class GameGUI:
         self.infoSet = []
         for i in range(21):
             self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
-        self.map_canvas.grid(row=0, column=0, columnspan=4, sticky="w", pady=(14, 7))
+        self.map_canvas.grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 7))
         self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=25),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
@@ -121,22 +123,23 @@ class GameGUI:
         self.game_labels[0].grid(row=0, column=4, padx=7)
         for i in range(1,5):
             self.game_labels[i].grid(row=i, column=0, columnspan=4, sticky="w")
-        self.game_buttons = (tk.Button(self.game_layout, text="", font=self.main_font, width=20, height=3, background='deep sky blue', command=lambda:self.click_move('cart')),
-            tk.Button(self.game_layout, text="", font=self.main_font, width=20, height=3, background='red', command=lambda:self.click_move('tram')),
-            tk.Button(self.game_layout, text="", font=self.main_font, width=20, height=3, background='green3', command=lambda:self.click_move('boat')),
-            tk.Button(self.game_layout, text="CATTURATO!", font=self.main_font, width=20, height=3, background='lightgray', command=lambda:self.switch_to_endgame(False)))
-        for i in range(4):
-            self.game_buttons[i].grid(row=5, column=i, sticky="w", pady=7)
+        self.game_buttons = (tk.Button(self.game_layout, text="", font=self.main_font, width=12, height=3, background='deep sky blue', command=lambda:self.click_move('cart')),
+            tk.Button(self.game_layout, text="", font=self.main_font, width=12, height=3, background='red', command=lambda:self.click_move('tram')),
+            tk.Button(self.game_layout, text="", font=self.main_font, width=12, height=3, background='green3', command=lambda:self.click_move('boat')),
+            tk.Button(self.game_layout, text="CATTURATO!", font=self.main_font, width=12, height=3, background='lightgray', command=lambda:self.switch_to_endgame(False)))
+        for i in range(3):
+            self.game_buttons[i].grid(row=5, column=i, sticky="w", pady=7, padx=(0,12))
+        self.game_buttons[3].grid(row=5, column=3, sticky="w", pady=7)
 
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
         self.win_layout = tk.Frame(self.window, width=window_width, height=window_height)
-        tk.Label(self.win_layout, text=win_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14,7))
+        tk.Label(self.win_layout, text=win_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0,7))
         tk.Label(self.win_layout, image=self.win_img_data).grid(row=1, column=0, columnspan=2, sticky="w", pady=7)
-        tk.Button(self.win_layout, text="Ricomincia", font=self.main_font, width=20, height=2, background='lightsteelblue', command=lambda:self.restart_layout(True)).grid(row=2, column=0, sticky="w", pady=10)
+        tk.Button(self.win_layout, text="Ricomincia", font=self.main_font, width=16, height=2, background='lightsteelblue', command=lambda:self.restart_layout(True)).grid(row=2, column=0, sticky="w", pady=10)
 
         lose_txt = "Oh no, sei stato catturato! Si ritorna all'acquario!"
         self.lose_layout = tk.Frame(self.window, width=window_width, height=window_height)
-        tk.Label(self.lose_layout, text=lose_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(14, 0))
+        tk.Label(self.lose_layout, text=lose_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 0))
         self.path_labels = (tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
@@ -144,7 +147,7 @@ class GameGUI:
         for i in range(4):
             self.path_labels[i].grid(row=i+1, column=0, columnspan=2, sticky="w")
         tk.Label(self.lose_layout, image=self.lose_img_data).grid(row=5, column=0, columnspan=2, sticky="w", pady=7)
-        tk.Button(self.lose_layout, text="Ricomincia", font=self.main_font, width=20, height=2, background='lightsteelblue', command=lambda:self.restart_layout(False)).grid(row=6, column=0, sticky="w", pady=7)
+        tk.Button(self.lose_layout, text="Ricomincia", font=self.main_font, width=16, height=2, background='lightsteelblue', command=lambda:self.restart_layout(False)).grid(row=6, column=0, sticky="w", pady=7)
 
     def create_circle(self, canv, x, y, r, color):
         return canv.create_oval(x-r, y-r, x+r, y+r, fill=None, outline=color, width=4)
@@ -313,6 +316,9 @@ class GameGUI:
 
     def mainloop(self):
         self.window.mainloop()
+
+    def quit(self):
+      self.window.destroy()
 
 if __name__ == "__main__":
     game_gui = GameGUI()
