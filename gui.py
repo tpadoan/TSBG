@@ -99,7 +99,7 @@ class GameGUI:
         self.canvas.bind("<Button-1>", self.click_on_pos)
         self.canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
         self.pre_game_pos = (self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
-        self.canvas.grid(row=0, column=0, sticky="w", pady=(0, 7))
+        self.canvas.grid(row=0, column=0, pady=(0, 7))
         self.pre_game_labels = (tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.pre_game_layout, text="", font=self.main_font, justify="left"),
@@ -114,22 +114,21 @@ class GameGUI:
         self.infoSet = []
         for i in range(21):
             self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
-        self.map_canvas.grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 7))
-        self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=25),
+        self.map_canvas.grid(row=0, column=0, columnspan=5, pady=(0, 7))
+        self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=24),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"))
-        self.game_labels[0].grid(row=0, column=4, padx=7)
         for i in range(1,5):
-            self.game_labels[i].grid(row=i, column=0, columnspan=4, sticky="w")
+            self.game_labels[i].grid(row=i, column=0, columnspan=5, sticky="w")
         self.game_buttons = (tk.Button(self.game_layout, text="", font=self.main_font, width=12, height=3, background='deep sky blue', command=lambda:self.click_move('cart')),
             tk.Button(self.game_layout, text="", font=self.main_font, width=12, height=3, background='red', command=lambda:self.click_move('tram')),
             tk.Button(self.game_layout, text="", font=self.main_font, width=12, height=3, background='green3', command=lambda:self.click_move('boat')),
             tk.Button(self.game_layout, text="CATTURATO!", font=self.main_font, width=12, height=3, background='lightgray', command=lambda:self.switch_to_endgame(False)))
-        for i in range(3):
+        for i in range(4):
             self.game_buttons[i].grid(row=5, column=i, sticky="w", pady=7, padx=(0,12))
-        self.game_buttons[3].grid(row=5, column=3, sticky="w", pady=7)
+        self.game_labels[0].grid(row=5, column=4, sticky="w")
 
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
         self.win_layout = tk.Frame(self.window, width=window_width, height=window_height)
