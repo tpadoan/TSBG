@@ -94,6 +94,7 @@ class Game:
         self.propagateProb(mrXmove)
         if not len(self.state[1]):
             return (None, True)
+        self.sy_env.turn_sub_counter += 1
         for i in range(self.numDetectives):
             if self.canMove(self.state[0][i]):
                 if self.useRL:
