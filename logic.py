@@ -1,10 +1,9 @@
 import pickle
+from numpy import zeros
 from numpy.random import choice
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 from sb3_contrib.ppo_mask import MaskablePPO
-from sb3_contrib.common.maskable.utils import get_action_masks
-from sb3_SY import ScotlandYard
 
 MOVES = ["boat", "tram", "cart"]
 
@@ -34,18 +33,13 @@ class Game:
             l = s.split(" ")
             self.cart[int(l[0])] = [int(p) for p in l[1:]]
         self.Pi = pickle.load(open("models/Pi", "rb"))
-        kwargs = {"random_start": True, "num_detectives": self.numDetectives, "max_turns": 10, "reveal_every": 0}
-        vec_env = make_vec_env(ScotlandYard, n_envs=1, env_kwargs=kwargs, vec_env_cls=DummyVecEnv)
-        self.PiRL = MaskablePPO.load("models/PPO.zip", env=vec_env)
-        self.sy_env = ScotlandYard(**kwargs)
+        self.PiRL = MaskablePPO.load("models/PPO.zip")
 
     def initGame(self, detectives: list[int], mrX: int, use_RL:bool):
         self.useRL = use_RL
         self.turn = 0
         self.state = [detectives[:], {mrX: 1.0}]
-        if self.useRL:
-            self.sy_env.reset()
-            self.sy_env.init_from_positions(detectives, mrX)
+        self.mrX_ohe = self.node_ohe(mrX)
 
     def getMrXPos(self):
         return self.state[1].keys()
@@ -93,20 +87,21 @@ class Game:
     def playTurn(self, mrXmove: str):
         self.propagateProb(mrXmove)
         if not len(self.state[1]):
-            return (None, True)
-        if self.useRL:
-            self.sy_env.turn_sub_counter += 1
+            return None, True
         for i in range(self.numDetectives):
             if self.canMove(self.state[0][i]):
                 if self.useRL:
-                    mrX_ohe = [0]*self.size_graph
-                    obs = mrX_ohe
+                    obs = [0]*self.size_graph  # no info about mrX location
+                    # obs = self.mrX_ohe[:]  # mrX's initial position
+                    # obs = [1 if j+1 in self.state[1].keys() else 0 for j in range(self.size_graph)]  # all inferred mrX's possible locations
                     for detective_ohe in [self.node_ohe(self.state[0][j]) for j in range(self.numDetectives)]:
                         obs.extend(detective_ohe)
                     obs.extend(self.transport_ohe(mrXmove))
-                    action_masks = get_action_masks(self.sy_env)
-                    action, _ = self.PiRL.predict(obs, action_masks=action_masks)
-                    _, reward, done, truncated, info = self.sy_env.step(action)
+                    masks = zeros((self.size_graph,))
+                    for detMove in self.dest(self.state[0][i]):
+                        if detMove not in self.state[0]:
+                            masks[detMove-1] = 1
+                    action, _ = self.PiRL.predict(obs, action_masks=masks)
                     self.state[0][i] = action+1
                 else:
                     x = choice(list(self.state[1].keys()), p=list(self.state[1].values()))
@@ -114,10 +109,10 @@ class Game:
                 diff = self.state[1].pop(self.state[0][i], False)
                 if not len(self.state[1]):
                     self.turn += 1
-                    return (self.state[0][:], True)
+                    return self.state[0][:], True
                 if diff:
                     tot = 1.0 - diff
                     for node, prob in self.state[1].items():
                         self.state[1][node] = prob / tot
         self.turn += 1
-        return (self.state[0][:], len(self.state[1]) == 1 and not self.canMove(list(self.state[1].keys())[0]))
+        return self.state[0][:], len(self.state[1]) == 1 and not self.canMove(list(self.state[1].keys())[0])
