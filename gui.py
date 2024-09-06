@@ -3,7 +3,8 @@ from tkinter import ttk
 from tkinter.font import Font
 from PIL import Image, ImageTk
 import random
-from rl_logic import RLGame as Game
+from logic import Game
+from rl_logic import RLGame
 
 class ScotlandYardGUI:
     def __init__(self):
@@ -82,6 +83,10 @@ class ScotlandYardGUI:
         self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
         self.mode_select.current(0)
         self.mode_select.grid(row=2, column=1)
+        self.detective_mode = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
+        self.detective_mode['values'] = ('Gioca contro degli agenti di RL!', 'Gioca contro detective probabilistici :)')
+        self.detective_mode.current(0)
+        self.detective_mode.grid(row=3, column=1)
         self.show_infoSet = tk.IntVar()
         self.show_infoSet.set(0)
         self.infoSet_checkbox = tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet)
@@ -204,6 +209,7 @@ class ScotlandYardGUI:
 
     def switch_to_game_layout(self, marco_starting_pos):
         self.counter = 0
+        self.game = RLGame() if self.detective_mode.current()==0 else Game()
         self.game = Game()
         self.game.initGame(self.detective_starting_loc, marco_starting_pos)
         if self.show_infoSet.get():
@@ -307,6 +313,7 @@ class ScotlandYardGUI:
         else:
             self.lose_layout.pack_forget()
         self.initial_layout.pack()
+
     def mainloop(self):
         self.window.mainloop()
 
