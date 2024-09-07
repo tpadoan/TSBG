@@ -5,8 +5,6 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 from sb3_contrib.ppo_mask import MaskablePPO
 
-MOVES = ["boat", "tram", "cart"]
-
 class Game:
     def __init__(self):
         self.size_graph = 21
@@ -48,7 +46,7 @@ class Game:
         return self.boat[source] + self.tram[source] + self.cart[source]
 
     def transport_ohe(self, move):
-        return [1 if move == t else 0 for t in MOVES]
+        return [1 if move == t else 0 for t in ["boat", "tram", "cart"]]
 
     def node_ohe(self, node):
         return [1 if (i+1) == node else 0 for i in range(self.size_graph)]
@@ -93,7 +91,8 @@ class Game:
                 if self.useRL:
                     obs = [0]*self.size_graph  # no info about mrX location
                     # obs = self.mrX_ohe[:]  # mrX's initial position
-                    # obs = [1 if j+1 in self.state[1].keys() else 0 for j in range(self.size_graph)]  # all inferred mrX's possible locations
+                    # obs = self.node_ohe(choice(list(self.state[1].keys()), p=list(self.state[1].values())))  # probabilistic inferred mrX's position
+                    # obs = [1 if (j+1) in self.state[1].keys() else 0 for j in range(self.size_graph)]  # all inferred mrX's possible locations
                     for detective_ohe in [self.node_ohe(self.state[0][j]) for j in range(self.numDetectives)]:
                         obs.extend(detective_ohe)
                     obs.extend(self.transport_ohe(mrXmove))
