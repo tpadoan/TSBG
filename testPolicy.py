@@ -191,8 +191,8 @@ if __name__ == '__main__':
   for mrXstrat in range(5):
     wins = 0
     print(f"\nTesting {numTests} runs with {'RL' if useRL else 'probabilistic'} detectives, mrX strat {mrXstrat}")
-    print("Run\tD_wins\tX_wins\tD_win%o")
+    print("Runs\tD_wins\tX_wins\tD_win%")
     for count in range(numTests):
       if run(G, mrXstrat, useRL):
         wins += 1
-    print(f"{numTests}\t{wins}\t{numTests-wins}\t{int(1000*wins/numTests)}")
+    print(f"{numTests}\t{wins}\t{numTests-wins}\t{int(100*wins/numTests)}")
