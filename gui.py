@@ -5,6 +5,9 @@ from PIL import Image, ImageTk
 import random
 from logic import Game
 
+import warnings
+warnings.filterwarnings('ignore')
+
 class GameGUI:
     def __init__(self):
         self.game = Game()
@@ -77,21 +80,20 @@ class GameGUI:
 
         start_txt ="Il pinguino Marco deve scappare dai guardiani dell'acquario di Trieste\nper ottenere pesce dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
         self.initial_layout = tk.Frame(self.window, width=window_width, height=window_height)
-        tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 7))
-        tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=3, sticky="w", pady=7)
-        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=10, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, rowspan=2, sticky="w", pady=7)
+        tk.Label(self.initial_layout, text=start_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, pady=(0, 7))
+        tk.Label(self.initial_layout, image=self.marco_img_data).grid(row=1, column=0, columnspan=2, pady=7)
+        tk.Button(self.initial_layout, text="Gioca!", font=self.main_font, width=10, height=2, background='lightsteelblue', command=self.switch_to_pre_game_layout).grid(row=2, column=0, rowspan=2, pady=7)
         self.mode_select = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
-        self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Difficile: biglietti numerati')
+        self.mode_select['values'] = ('Semplice: biglietti illimitati', 'Medio: biglietti numerati', 'Difficile: biglietti esatti')
         self.mode_select.current(0)
         self.mode_select.grid(row=2, column=1, padx=16)
         self.detective_ai = ttk.Combobox(self.initial_layout, font=self.main_font, width=25, textvariable=tk.StringVar(), state='readonly')
         self.detective_ai['values'] = ('Contro agenti di RL', 'Contro agenti probabilistici')
         self.detective_ai.current(0)
         self.detective_ai.grid(row=3, column=1, padx=16)
-        self.show_infoSet = tk.IntVar()
-        self.show_infoSet.set(0)
-        self.infoSet_checkbox = tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet)
-        self.infoSet_checkbox.grid(row=2, column=2)
+        # self.show_infoSet = tk.IntVar()
+        # self.show_infoSet.set(0)
+        # tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet).grid(row=2, column=2)
         self.initial_layout.pack()
 
         self.pre_game_layout = tk.Frame(self.window, width=window_width, height=window_height)
@@ -111,9 +113,9 @@ class GameGUI:
         self.map_canvas = tk.Canvas(self.game_layout, width=img_size_mappa[0], height=img_size_mappa[1])
         self.map_canvas.create_image(0, 0, anchor='nw', image=self.mappa_img_data)
         self.game_pos = (self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'), self.create_circle(self.map_canvas, self.pos_r+1, self.pos_r+1, self.pos_r, 'yellow'))
-        self.infoSet = []
-        for i in range(21):
-            self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
+        # self.infoSet = []
+        # for i in range(21):
+        #    self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
         self.map_canvas.grid(row=0, column=0, columnspan=5, pady=(0, 7))
         self.game_labels = (tk.Label(self.game_layout, text="", font=self.main_font, justify="left", width=24),
             tk.Label(self.game_layout, text="", font=self.main_font, justify="left"),
@@ -132,27 +134,27 @@ class GameGUI:
 
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
         self.win_layout = tk.Frame(self.window, width=window_width, height=window_height)
-        tk.Label(self.win_layout, text=win_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0,7))
-        tk.Label(self.win_layout, image=self.win_img_data).grid(row=1, column=0, columnspan=2, sticky="w", pady=7)
-        tk.Button(self.win_layout, text="Ricomincia", font=self.main_font, width=16, height=2, background='lightsteelblue', command=lambda:self.restart_layout(True)).grid(row=2, column=0, sticky="w", pady=10)
+        tk.Label(self.win_layout, text=win_txt, font=self.main_font, justify="left").grid(row=0, column=0, sticky="w", pady=(0,7))
+        tk.Label(self.win_layout, image=self.win_img_data).grid(row=1, column=0, sticky="w", pady=7)
+        tk.Button(self.win_layout, text="Ricomincia", font=self.main_font, width=16, height=2, background='lightsteelblue', command=lambda:self.restart_layout(True)).grid(row=2, column=0, pady=10)
 
         lose_txt = "Oh no, sei stato catturato! Si ritorna all'acquario!"
         self.lose_layout = tk.Frame(self.window, width=window_width, height=window_height)
-        tk.Label(self.lose_layout, text=lose_txt, font=self.main_font, justify="left").grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 0))
+        tk.Label(self.lose_layout, text=lose_txt, font=self.main_font, justify="left").grid(row=0, column=0, sticky="w", pady=(0, 0))
         self.path_labels = (tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"),
             tk.Label(self.lose_layout, text="", font=self.main_font, justify="left"))
         for i in range(4):
-            self.path_labels[i].grid(row=i+1, column=0, columnspan=2, sticky="w")
-        tk.Label(self.lose_layout, image=self.lose_img_data).grid(row=5, column=0, columnspan=2, sticky="w", pady=7)
-        tk.Button(self.lose_layout, text="Ricomincia", font=self.main_font, width=16, height=2, background='lightsteelblue', command=lambda:self.restart_layout(False)).grid(row=6, column=0, sticky="w", pady=7)
+            self.path_labels[i].grid(row=i+1, column=0, sticky="w")
+        tk.Label(self.lose_layout, image=self.lose_img_data).grid(row=5, column=0, sticky="w", pady=7)
+        tk.Button(self.lose_layout, text="Ricomincia", font=self.main_font, width=16, height=2, background='lightsteelblue', command=lambda:self.restart_layout(False)).grid(row=6, column=0, pady=7)
 
     def create_circle(self, canv, x, y, r, color):
         return canv.create_oval(x-r, y-r, x+r, y+r, fill=None, outline=color, width=4)
 
     def nearest_loc(self, x, y):
-        dist = 1050    # initially: max acceptable distance
+        dist = 1200    # initially: max acceptable distance
         loc = None
         for i in range(len(self.loc_list)):
             new_dist = ((self.loc_list[i][0]-x)/self.w_factor)**2 + ((self.loc_list[i][1]-y)/self.h_factor)**2
@@ -163,14 +165,14 @@ class GameGUI:
 
     def click_on_pos(self, event):
         mrx_starting_loc = self.nearest_loc(event.x, event.y)
-        if mrx_starting_loc:
+        if mrx_starting_loc and (mrx_starting_loc not in self.detective_starting_loc):
             self.switch_to_game_layout(mrx_starting_loc)
 
     def click_move(self, move):
         if self.counter == 10:
             self.switch_to_endgame(True)
         else:
-            if self.mode_select.current()==1:
+            if self.mode_select.current()>0:
                 if move=='cart':
                     self.tickets[0] -= 1
                 elif move=='tram':
@@ -191,41 +193,44 @@ class GameGUI:
                 self.game_buttons[2].configure(text="Traghetto", state='disabled')
                 for i in range(3):
                     self.game_buttons[i].update()
-            if self.show_infoSet.get():
-                self.update_infoSet(self.game.getMrXPos())
+            # if self.show_infoSet.get():
+            #    self.update_infoSet(self.game.getMrXPos())
 
-    def update_infoSet(self, infoS):
-            for i in range(21):
-                if i+1 in infoS:
-                    self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
-                else:
-                    self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
+    # def update_infoSet(self, infoS):
+    #        for i in range(21):
+    #            if i+1 in infoS:
+    #                self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
+    #            else:
+    #                self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
 
     def switch_to_pre_game_layout(self):
         detective_loc = random.sample(range(1, 22), 3)
         self.set_detective_starting_loc(detective_loc)
-        self.update_infoSet([])
+        # self.update_infoSet([])
         self.initial_layout.pack_forget()
         self.pre_game_layout.pack()
 
     def switch_to_game_layout(self, marco_starting_pos):
         self.counter = 0
         self.game.initGame(self.detective_starting_loc, marco_starting_pos, not bool(self.detective_ai.current()))
-        if self.show_infoSet.get():
-            self.update_infoSet(self.game.getMrXPos())
+        # if self.show_infoSet.get():
+        #    self.update_infoSet(self.game.getMrXPos())
         self.game_labels[0].configure(text='Turno 1')
         self.game_labels[4].configure(text='Posizione iniziale di Marco:  '+str(marco_starting_pos))
         self.path_labels[3].configure(text='Percorso di Marco:  '+str(marco_starting_pos))
-        if self.mode_select.current()==1:
-            self.tickets = [8,5,3]
-            self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal')
-            self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal')
-            self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal')
-        else:
+        if self.mode_select.current()==0:
             self.tickets = None
             self.game_buttons[0].configure(text="Bicicletta", state='normal')
             self.game_buttons[1].configure(text="Autobus", state='normal')
             self.game_buttons[2].configure(text="Traghetto", state='normal')
+        else:
+            if self.mode_select.current()==1:
+                self.tickets = [8,5,3]
+            else:
+                self.tickets = [6,3,1]
+            self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal')
+            self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal')
+            self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal')
         for i in range(3):
             self.game_buttons[i].update()
         self.game_labels[0].update()
@@ -290,7 +295,7 @@ class GameGUI:
     def update_counters(self):
         if self.counter == 10:
             self.game_labels[0].configure(text='Il gioco è terminato.\nSe non sei stato catturato,\nprendi un mezzo per fuggire!')
-            if self.mode_select.current()==1:
+            if self.mode_select.current()>0:
                 self.game_buttons[0].configure(text="Bicicletta", state='normal')
                 self.game_buttons[1].configure(text="Autobus", state='normal')
                 self.game_buttons[2].configure(text="Traghetto", state='normal')
@@ -298,7 +303,7 @@ class GameGUI:
                     self.game_buttons[i].update()
         else:
             self.game_labels[0].configure(text='Turno ' + str(self.counter+1))
-            if self.mode_select.current()==1:
+            if self.mode_select.current()>0:
                 self.game_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})", state='normal' if self.tickets[0] else 'disabled')
                 self.game_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})", state='normal' if self.tickets[1] else 'disabled')
                 self.game_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})", state='normal' if self.tickets[2] else 'disabled')
