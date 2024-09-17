@@ -5,25 +5,26 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 from sb3_contrib.ppo_mask import MaskablePPO
 
+
 class Game:
     def __init__(self):
         self.size_graph = 21
         self.numDetectives = 3
-        self.boat = {(i+1):[] for i in range(self.size_graph)}
+        self.boat = {(i + 1): [] for i in range(self.size_graph)}
         f = open("data/boat.txt", "r", encoding="utf8")
         content = f.read()
         f.close()
         for s in content.split("\n"):
             l = s.split(" ")
             self.boat[int(l[0])] = [int(p) for p in l[1:]]
-        self.tram = {(i+1):[] for i in range(self.size_graph)}
+        self.tram = {(i + 1): [] for i in range(self.size_graph)}
         f = open("data/tram.txt", "r", encoding="utf8")
         content = f.read()
         f.close()
         for s in content.split("\n"):
             l = s.split(" ")
             self.tram[int(l[0])] = [int(p) for p in l[1:]]
-        self.cart = {(i+1):[] for i in range(self.size_graph)}
+        self.cart = {(i + 1): [] for i in range(self.size_graph)}
         f = open("data/cart.txt", "r", encoding="utf8")
         content = f.read()
         f.close()
@@ -33,7 +34,7 @@ class Game:
         self.Pi = pickle.load(open("models/Pi", "rb"))
         self.PiRL = MaskablePPO.load("models/PPO.zip")
 
-    def initGame(self, detectives: list[int], mrX: int, use_RL:bool):
+    def initGame(self, detectives: list[int], mrX: int, use_RL: bool):
         self.useRL = use_RL
         self.turn = 0
         self.state = [detectives[:], {mrX: 1.0}]
@@ -49,7 +50,7 @@ class Game:
         return [1 if move == t else 0 for t in ["boat", "tram", "cart"]]
 
     def node_ohe(self, node):
-        return [1 if (i+1) == node else 0 for i in range(self.size_graph)]
+        return [1 if (i + 1) == node else 0 for i in range(self.size_graph)]
 
     def canMove(self, pos: int):
         flag = False
@@ -89,22 +90,34 @@ class Game:
         for i in range(self.numDetectives):
             if self.canMove(self.state[0][i]):
                 if self.useRL:
-                    obs = [0]*self.size_graph  # no info about mrX location
+                    obs = [0] * self.size_graph  # no info about mrX location
                     # obs = self.mrX_ohe[:]  # mrX's initial position
                     # obs = self.node_ohe(choice(list(self.state[1].keys()), p=list(self.state[1].values())))  # probabilistic inferred mrX's position
                     # obs = [1 if (j+1) in self.state[1].keys() else 0 for j in range(self.size_graph)]  # all inferred mrX's possible locations
-                    for detective_ohe in [self.node_ohe(self.state[0][j]) for j in range(self.numDetectives)]:
+                    for detective_ohe in [
+                        self.node_ohe(self.state[0][j])
+                        for j in range(self.numDetectives)
+                    ]:
                         obs.extend(detective_ohe)
                     obs.extend(self.transport_ohe(mrXmove))
                     masks = zeros((self.size_graph,))
                     for detMove in self.dest(self.state[0][i]):
                         if detMove not in self.state[0]:
-                            masks[detMove-1] = 1
+                            masks[detMove - 1] = 1
                     action, _ = self.PiRL.predict(obs, action_masks=masks)
-                    self.state[0][i] = action+1
+                    self.state[0][i] = action + 1
                 else:
-                    x = choice(list(self.state[1].keys()), p=list(self.state[1].values()))
-                    self.state[0][i] = self.Pi[self.turn][i+1][tuple((self.state[0][k - 1] if k > 0 else x for k in range(self.numDetectives+1)))]
+                    x = choice(
+                        list(self.state[1].keys()), p=list(self.state[1].values())
+                    )
+                    self.state[0][i] = self.Pi[self.turn][i + 1][
+                        tuple(
+                            (
+                                self.state[0][k - 1] if k > 0 else x
+                                for k in range(self.numDetectives + 1)
+                            )
+                        )
+                    ]
                 diff = self.state[1].pop(self.state[0][i], False)
                 if not len(self.state[1]):
                     self.turn += 1
@@ -114,4 +127,6 @@ class Game:
                     for node, prob in self.state[1].items():
                         self.state[1][node] = prob / tot
         self.turn += 1
-        return self.state[0][:], len(self.state[1]) == 1 and not self.canMove(list(self.state[1].keys())[0])
+        return self.state[0][:], len(self.state[1]) == 1 and not self.canMove(
+            list(self.state[1].keys())[0]
+        )
