@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import pickle
 
 # size of graph
@@ -159,4 +161,4 @@ for t in range(maxTurns - 1, -1, -1):
                                         P[t][s][(h, i, j, k)] = m[s]
 
 # stores the optimal policy P on file Pi
-pickle.dump(P, open("models/presolved.pickle", "wb"))
+pickle.dump(P, open("models/presolved.pickle", "wb"))  # type: ignore

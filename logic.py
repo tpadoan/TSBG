@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import pickle
 
 from numpy import zeros
@@ -101,8 +103,8 @@ class Game:
                     for detMove in self.dest(self.state[0][i]):
                         if detMove not in self.state[0]:
                             masks[detMove - 1] = 1
-                    action, _ = self.PiRL.predict(obs, action_masks=masks)
-                    self.state[0][i] = action + 1
+                    action, _ = self.PiRL.predict(obs, action_masks=masks)  # type: ignore
+                    self.state[0][i] = action + 1  # type: ignore
                 else:
                     x = choice(
                         list(self.state[1].keys()), p=list(self.state[1].values())
