@@ -1,11 +1,13 @@
+import random
 import tkinter as tk
+import warnings
 from tkinter import ttk
 from tkinter.font import Font
-from PIL import Image, ImageTk
-import random
-from logic import Game
 
-import warnings
+from PIL import Image
+from PIL import ImageTk
+
+from logic import Game
 
 warnings.filterwarnings("ignore")
 
@@ -23,26 +25,26 @@ class GameGUI:
         self.w_factor = self.screen_width * 1.1 / 2560
         self.h_factor = self.screen_height * 1.1 / 1440
         self.loc_list = [
-            (225, 100),  #  1
-            (311, 189),  #  2
-            (412, 205),  #  3
-            (515, 295),  #  4
-            (556, 425),  #  5
-            (505, 133),  #  6
-            (650, 285),  #  7
-            (675, 459),  #  8
-            (563, 530),  #  9
-            (436, 735),  # 10
-            (635, 80),  # 11
-            (730, 336),  # 12
-            (735, 580),  # 13
-            (802, 205),  # 14
-            (826, 300),  # 15
-            (875, 488),  # 16
-            (710, 740),  # 17
-            (852, 60),  # 18
-            (940, 220),  # 19
-            (1012, 550),  # 20
+            (225, 100),
+            (311, 189),
+            (412, 205),
+            (515, 295),
+            (556, 425),
+            (505, 133),
+            (650, 285),
+            (675, 459),
+            (563, 530),
+            (436, 735),
+            (635, 80),
+            (730, 336),
+            (735, 580),
+            (802, 205),
+            (826, 300),
+            (875, 488),
+            (710, 740),
+            (852, 60),
+            (940, 220),
+            (1012, 550),
             (940, 675),
         ]  # 21
         for i in range(len(self.loc_list)):
@@ -78,7 +80,7 @@ class GameGUI:
         )
         mappa_img = mappa_img.resize(img_size_mappa)
 
-        win_img = Image.open("./img/thug_life.jpg")
+        win_img = Image.open("./img/escaped.jpg")
         alpha_win = win_img.size[0] / win_img.size[1]
         img_size_win = (int(0.6 * window_height * alpha_win), int(0.6 * window_height))
         win_img = win_img.resize(img_size_win)
@@ -143,9 +145,6 @@ class GameGUI:
         )
         self.detective_ai.current(0)
         self.detective_ai.grid(row=3, column=1, padx=16)
-        # self.show_infoSet = tk.IntVar()
-        # self.show_infoSet.set(0)
-        # tk.Checkbutton(self.initial_layout, text="Mostra le ipotesi su Marco", font=self.main_font, variable=self.show_infoSet).grid(row=2, column=2)
         self.initial_layout.pack()
 
         self.pre_game_layout = tk.Frame(
@@ -206,9 +205,7 @@ class GameGUI:
                 self.map_canvas, self.pos_r + 1, self.pos_r + 1, self.pos_r, "yellow"
             ),
         )
-        # self.infoSet = []
-        # for i in range(21):
-        #    self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
+
         self.map_canvas.grid(row=0, column=0, columnspan=5, pady=(0, 7))
         self.game_labels = (
             tk.Label(
@@ -229,7 +226,7 @@ class GameGUI:
                 width=12,
                 height=3,
                 background="deep sky blue",
-                command=lambda: self.click_move("cart"),
+                command=lambda: self.click_move("bike"),
             ),
             tk.Button(
                 self.game_layout,
@@ -238,7 +235,7 @@ class GameGUI:
                 width=12,
                 height=3,
                 background="red",
-                command=lambda: self.click_move("tram"),
+                command=lambda: self.click_move("bus"),
             ),
             tk.Button(
                 self.game_layout,
@@ -311,7 +308,8 @@ class GameGUI:
             command=lambda: self.restart_layout(False),
         ).grid(row=6, column=0, pady=7)
 
-    def create_circle(self, canv, x, y, r, color):
+    @staticmethod
+    def create_circle(canv, x, y, r, color):
         return canv.create_oval(
             x - r, y - r, x + r, y + r, fill=None, outline=color, width=4
         )
@@ -338,9 +336,9 @@ class GameGUI:
             self.switch_to_endgame(True)
         else:
             if self.mode_select.current() > 0:
-                if move == "cart":
+                if move == "bike":
                     self.tickets[0] -= 1
-                elif move == "tram":
+                elif move == "bus":
                     self.tickets[1] -= 1
                 elif move == "boat":
                     self.tickets[2] -= 1
@@ -358,15 +356,6 @@ class GameGUI:
                 self.game_buttons[2].configure(text="Traghetto", state="disabled")
                 for i in range(3):
                     self.game_buttons[i].update()
-            # if self.show_infoSet.get():
-            #    self.update_infoSet(self.game.getMrXPos())
-
-    # def update_infoSet(self, infoS):
-    #        for i in range(21):
-    #            if i+1 in infoS:
-    #                self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
-    #            else:
-    #                self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
 
     def switch_to_pre_game_layout(self):
         detective_loc = random.sample(range(1, 22), 3)
@@ -382,8 +371,7 @@ class GameGUI:
             marco_starting_pos,
             not bool(self.detective_ai.current()),
         )
-        # if self.show_infoSet.get():
-        #    self.update_infoSet(self.game.getMrXPos())
+
         self.game_labels[0].configure(text="Turno 1")
         self.game_labels[4].configure(
             text="Posizione iniziale di Marco:  " + str(marco_starting_pos)
@@ -537,9 +525,9 @@ class GameGUI:
             )
 
     def update_marco_path(self, move):
-        if move == "cart":
+        if move == "bike":
             transport = "bici"
-        elif move == "tram":
+        elif move == "bus":
             transport = "bus"
         else:
             transport = "nave"

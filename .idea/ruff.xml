@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RuffConfigService">
+    <option name="globalRuffExecutablePath" value="c:\users\emanu\.local\bin\ruff.exe" />
+    <option name="runRuffOnReformatCode" value="false" />
+  </component>
+</project>

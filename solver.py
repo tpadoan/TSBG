@@ -16,7 +16,7 @@ for s in content.split("\n"):
     boat[int(l[0])] = [int(p) for p in l[1:]]
 
 tram = {i: [] for i in range(1, sizeGraph + 1)}
-f = open("data/tram.txt", "r", encoding="utf8")
+f = open("data/bus.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split("\n"):
@@ -24,7 +24,7 @@ for s in content.split("\n"):
     tram[int(l[0])] = [int(p) for p in l[1:]]
 
 cart = {i: [] for i in range(1, sizeGraph + 1)}
-f = open("data/cart.txt", "r", encoding="utf8")
+f = open("data/bike.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split("\n"):
@@ -99,13 +99,13 @@ P = [
             for k in range(1, sizeGraph + 1)
             if i != j != k != i
         }
-        for s in range(numDetectives + 1)
+        for _ in range(numDetectives + 1)
     ]
-    for t in range(maxTurns)
+    for _ in range(maxTurns)
 ]
 
 # init the value function
-V = [[{} for s in range(numDetectives + 1)] for t in range(maxTurns + 1)]
+V = [[{} for _ in range(numDetectives + 1)] for _ in range(maxTurns + 1)]
 for h in range(1, sizeGraph + 1):
     for i in range(1, sizeGraph + 1):
         for j in range(1, sizeGraph + 1):
@@ -159,10 +159,4 @@ for t in range(maxTurns - 1, -1, -1):
                                         P[t][s][(h, i, j, k)] = m[s]
 
 # stores the optimal policy P on file Pi
-pickle.dump(P, open("models/Pi", "wb"))
-
-# stores the expected outcomes V on file V
-# pickle.dump(V, open("models/V", "wb"))
-
-# to load optimal policy P from file, do:
-# P = pickle.load(open("models/Pi", "rb"))
+pickle.dump(P, open("models/presolved.pickle", "wb"))
