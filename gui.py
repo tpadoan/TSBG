@@ -1,15 +1,21 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import random
 import tkinter as tk
 import warnings
 from tkinter import ttk
 from tkinter.font import Font
 
+import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
 from logic import Game
 
 warnings.filterwarnings("ignore")
+
+IMG_VARIABILITY_MM: int = 2
+IMG_VARIABILITY_CE: int = 3
 
 
 class GameGUI:
@@ -49,7 +55,7 @@ class GameGUI:
         ]  # 21
         for i in range(len(self.loc_list)):
             self.loc_list[i] = (
-                int(self.w_factor * self.loc_list[i][0]),
+                int(self.w_factor * self.loc_list[i][0]),  # type: ignore
                 int(0.7 * 0.88 * self.screen_height)
                 - int(self.h_factor * self.loc_list[i][1]),
             )
@@ -64,7 +70,9 @@ class GameGUI:
             side="top", anchor="ne"
         )
 
-        marco_img = Image.open("./img/marco.jpg")
+        marco_img = Image.open(
+            f"./img/marco_{np.random.randint(IMG_VARIABILITY_MM)}.jpg"
+        )
         alpha_marco = marco_img.size[0] / marco_img.size[1]
         img_size_marco = (
             int(0.7 * window_height * alpha_marco),
@@ -80,12 +88,14 @@ class GameGUI:
         )
         mappa_img = mappa_img.resize(img_size_mappa)
 
-        win_img = Image.open("./img/escaped.jpg")
+        win_img = Image.open(
+            f"./img/escaped_{(npice := np.random.randint(IMG_VARIABILITY_CE))}.jpg"
+        )
         alpha_win = win_img.size[0] / win_img.size[1]
         img_size_win = (int(0.6 * window_height * alpha_win), int(0.6 * window_height))
         win_img = win_img.resize(img_size_win)
 
-        lose_img = Image.open("./img/captured.jpg")
+        lose_img = Image.open(f"./img/captured_{npice}.jpg")
         alpha_lose = lose_img.size[0] / lose_img.size[1]
         img_size_lose = (
             int(0.6 * window_height * alpha_lose),
@@ -106,7 +116,7 @@ class GameGUI:
         tk.Label(
             self.initial_layout, text=start_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, columnspan=2, pady=(0, 7))
-        tk.Label(self.initial_layout, image=self.marco_img_data).grid(
+        tk.Label(self.initial_layout, image=self.marco_img_data).grid(  # type: ignore
             row=1, column=0, columnspan=2, pady=7
         )
         tk.Button(
@@ -179,7 +189,7 @@ class GameGUI:
             ),
             tk.Label(
                 self.pre_game_layout,
-                text="Clicka sulla posizione iniziale di Marco",
+                text="Clicca sulla posizione iniziale di Marco",
                 font=self.main_font,
                 justify="left",
             ),
@@ -267,7 +277,7 @@ class GameGUI:
         tk.Label(
             self.win_layout, text=win_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, sticky="w", pady=(0, 7))
-        tk.Label(self.win_layout, image=self.win_img_data).grid(
+        tk.Label(self.win_layout, image=self.win_img_data).grid(  # type: ignore
             row=1, column=0, sticky="w", pady=7
         )
         tk.Button(
@@ -295,7 +305,7 @@ class GameGUI:
         )
         for i in range(4):
             self.path_labels[i].grid(row=i + 1, column=0, sticky="w")
-        tk.Label(self.lose_layout, image=self.lose_img_data).grid(
+        tk.Label(self.lose_layout, image=self.lose_img_data).grid(  # type: ignore
             row=5, column=0, sticky="w", pady=7
         )
         tk.Button(
