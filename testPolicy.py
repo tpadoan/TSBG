@@ -1,5 +1,5 @@
-import pickle
 from numpy.random import choice
+
 from logic import Game
 
 # size of graph
@@ -20,7 +20,7 @@ for s in content.split("\n"):
     boat[int(l[0])] = [int(p) for p in l[1:]]
 
 tram = {(i + 1): [] for i in range(sizeGraph)}
-f = open("data/tram.txt", "r", encoding="utf8")
+f = open("data/bus.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split("\n"):
@@ -28,7 +28,7 @@ for s in content.split("\n"):
     tram[int(l[0])] = [int(p) for p in l[1:]]
 
 cart = {(i + 1): [] for i in range(sizeGraph)}
-f = open("data/cart.txt", "r", encoding="utf8")
+f = open("data/bike.txt", "r", encoding="utf8")
 content = f.read()
 f.close()
 for s in content.split("\n"):
@@ -44,16 +44,16 @@ def transportFor(source, target):
     if target in boat[source]:
         return "boat"
     if target in tram[source]:
-        return "tram"
-    return "cart"
+        return "bus"
+    return "bike"
 
 
 def propagate(state, move):
     new = set()
     transport = None
-    if move == "cart":
+    if move == "bike":
         transport = cart
-    elif move == "tram":
+    elif move == "bus":
         transport = tram
     else:
         transport = boat

@@ -1,5 +1,6 @@
 __pycache__/
 .vscode/
-models/Pi
 img/
-.python_env_win
+models/presolved.pickle
+models/RLPPO.zip
+.python_env_win/

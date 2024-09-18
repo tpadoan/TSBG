@@ -1,8 +1,7 @@
 import pickle
+
 from numpy import zeros
 from numpy.random import choice
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.vec_env import DummyVecEnv
 from sb3_contrib.ppo_mask import MaskablePPO
 
 
@@ -18,21 +17,21 @@ class Game:
             l = s.split(" ")
             self.boat[int(l[0])] = [int(p) for p in l[1:]]
         self.tram = {(i + 1): [] for i in range(self.size_graph)}
-        f = open("data/tram.txt", "r", encoding="utf8")
+        f = open("data/bus.txt", "r", encoding="utf8")
         content = f.read()
         f.close()
         for s in content.split("\n"):
             l = s.split(" ")
             self.tram[int(l[0])] = [int(p) for p in l[1:]]
         self.cart = {(i + 1): [] for i in range(self.size_graph)}
-        f = open("data/cart.txt", "r", encoding="utf8")
+        f = open("data/bike.txt", "r", encoding="utf8")
         content = f.read()
         f.close()
         for s in content.split("\n"):
             l = s.split(" ")
             self.cart[int(l[0])] = [int(p) for p in l[1:]]
-        self.Pi = pickle.load(open("models/Pi", "rb"))
-        self.PiRL = MaskablePPO.load("models/PPO.zip")
+        self.Pi = pickle.load(open("models/presolved.pickle", "rb"))
+        self.PiRL = MaskablePPO.load("models/RLPPO.zip")
 
     def initGame(self, detectives: list[int], mrX: int, use_RL: bool):
         self.useRL = use_RL
@@ -47,7 +46,7 @@ class Game:
         return self.boat[source] + self.tram[source] + self.cart[source]
 
     def transport_ohe(self, move):
-        return [1 if move == t else 0 for t in ["boat", "tram", "cart"]]
+        return [1 if move == t else 0 for t in ["boat", "bus", "bike"]]
 
     def node_ohe(self, node):
         return [1 if (i + 1) == node else 0 for i in range(self.size_graph)]
@@ -61,9 +60,9 @@ class Game:
 
     def propagateProb(self, move: str):
         transport = None
-        if move == "cart":
+        if move == "bike":
             transport = self.cart
-        elif move == "tram":
+        elif move == "bus":
             transport = self.tram
         else:
             transport = self.boat
@@ -91,9 +90,7 @@ class Game:
             if self.canMove(self.state[0][i]):
                 if self.useRL:
                     obs = [0] * self.size_graph  # no info about mrX location
-                    # obs = self.mrX_ohe[:]  # mrX's initial position
-                    # obs = self.node_ohe(choice(list(self.state[1].keys()), p=list(self.state[1].values())))  # probabilistic inferred mrX's position
-                    # obs = [1 if (j+1) in self.state[1].keys() else 0 for j in range(self.size_graph)]  # all inferred mrX's possible locations
+
                     for detective_ohe in [
                         self.node_ohe(self.state[0][j])
                         for j in range(self.numDetectives)
