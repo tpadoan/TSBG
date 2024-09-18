@@ -1,6 +1,5 @@
 __pycache__/
 .vscode/
-img/
 models/presolved.pickle
 models/RLPPO.zip
 .python_env_win/
