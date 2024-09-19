@@ -6,7 +6,6 @@ import warnings
 from tkinter import ttk
 from tkinter.font import Font
 
-import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
@@ -14,10 +13,11 @@ from logic import Game
 
 warnings.filterwarnings("ignore")
 
-IMG_VARIABILITY_MM: int = 2
-IMG_VARIABILITY_CE: int = 3
+IMG_VARIABILITY_MM: int = 1
+IMG_VARIABILITY_CE: int = 2
 
 
+# noinspection PyAttributeOutsideInit
 class GameGUI:
     def __init__(self):
         self.game = Game()
@@ -71,7 +71,7 @@ class GameGUI:
         )
 
         marco_img = Image.open(
-            f"./img/marco_{np.random.randint(IMG_VARIABILITY_MM)}.jpg"
+            f"./img/marco_{random.randint(0, IMG_VARIABILITY_MM)}.jpg"
         )
         alpha_marco = marco_img.size[0] / marco_img.size[1]
         img_size_marco = (
@@ -88,9 +88,8 @@ class GameGUI:
         )
         mappa_img = mappa_img.resize(img_size_mappa)
 
-        win_img = Image.open(
-            f"./img/escaped_{(npice := np.random.randint(IMG_VARIABILITY_CE))}.jpg"
-        )
+        npice: int = random.randint(0, IMG_VARIABILITY_CE)
+        win_img = Image.open(f"./img/escaped_{npice}.jpg")
         alpha_win = win_img.size[0] / win_img.size[1]
         img_size_win = (int(0.6 * window_height * alpha_win), int(0.6 * window_height))
         win_img = win_img.resize(img_size_win)
@@ -515,7 +514,7 @@ class GameGUI:
 
     def update_detective(self, detective_loc):
         for i in range(3):
-            new = " --> " + (
+            new = " → " + (
                 str(detective_loc[i])
                 if detective_loc[i] > 9
                 else (" " + str(detective_loc[i]) + " ")
@@ -542,9 +541,9 @@ class GameGUI:
         else:
             transport = "nave"
         prev = self.game_labels[4]["text"]
-        self.game_labels[4].configure(text=prev + " -- " + transport)
+        self.game_labels[4].configure(text=prev + " — " + transport)
         prev = self.path_labels[3]["text"]
-        self.path_labels[3].configure(text=prev + " -- " + transport)
+        self.path_labels[3].configure(text=prev + " — " + transport)
         self.game_labels[4].update()
         self.path_labels[3].update()
 

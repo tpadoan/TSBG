@@ -7,6 +7,7 @@ from numpy.random import choice
 from sb3_contrib.ppo_mask import MaskablePPO
 
 
+# noinspection PyPep8Naming,PyAttributeOutsideInit
 class Game:
     def __init__(self):
         self.size_graph = 21
@@ -47,7 +48,8 @@ class Game:
     def dest(self, source: int):
         return self.boat[source] + self.tram[source] + self.cart[source]
 
-    def transport_ohe(self, move):
+    @staticmethod
+    def transport_ohe(move):
         return [1 if move == t else 0 for t in ["boat", "bus", "bike"]]
 
     def node_ohe(self, node):
@@ -61,7 +63,6 @@ class Game:
         return flag
 
     def propagateProb(self, move: str):
-        transport = None
         if move == "bike":
             transport = self.cart
         elif move == "bus":
@@ -106,7 +107,7 @@ class Game:
                     action, _ = self.PiRL.predict(obs, action_masks=masks)  # type: ignore
                     self.state[0][i] = action + 1  # type: ignore
                 else:
-                    x = choice(
+                    x = choice(  # type: ignore
                         list(self.state[1].keys()), p=list(self.state[1].values())
                     )
                     self.state[0][i] = self.Pi[self.turn][i + 1][
