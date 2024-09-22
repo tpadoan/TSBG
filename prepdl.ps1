@@ -4,5 +4,6 @@ python -m venv .python_env_win
 pip install pip -U
 pip install uv -U
 uv pip install Pillow numpy stable_baselines3 sb3_contrib
-cd models
+Set-Location models
 ./getmodels.ps1
+Set-Location ../
