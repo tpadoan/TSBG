@@ -70,15 +70,11 @@ class GameGUI:
             side="top", anchor="ne"
         )
 
-        marco_img = Image.open(
-            f"./img/marco_{random.randint(0, IMG_VARIABILITY_MM)}.jpg"
-        )
-        alpha_marco = marco_img.size[0] / marco_img.size[1]
-        img_size_marco = (
-            int(0.7 * window_height * alpha_marco),
-            int(0.7 * window_height),
-        )
-        marco_img = marco_img.resize(img_size_marco)
+        marco_img = [Image.open(f"./img/marco_{i}.jpg") for i in range(IMG_VARIABILITY_MM)]
+        alpha_marco = [marco_img[i].size[0] / marco_img[i].size[1] for i in range(IMG_VARIABILITY_MM)]
+        img_size_marco = [(int(0.7 * window_height * alpha_marco[i]), int(0.7 * window_height)) for i in range(IMG_VARIABILITY_MM)]
+        for i in range(IMG_VARIABILITY_MM):
+            marco_img[i] = marco_img[i].resize(img_size_marco[i])
 
         mappa_img = Image.open("./img/ts_map.jpg")
         alpha_mappa = mappa_img.size[0] / mappa_img.size[1]
@@ -88,25 +84,24 @@ class GameGUI:
         )
         mappa_img = mappa_img.resize(img_size_mappa)
 
-        npice: int = random.randint(0, IMG_VARIABILITY_CE)
-        win_img = Image.open(f"./img/escaped_{npice}.jpg")
-        alpha_win = win_img.size[0] / win_img.size[1]
-        img_size_win = (int(0.6 * window_height * alpha_win), int(0.6 * window_height))
-        win_img = win_img.resize(img_size_win)
+        win_img = [Image.open(f"./img/escaped_{npice}.jpg") for i in range(IMG_VARIABILITY_CE)]
+        alpha_win = [win_img[i].size[0] / win_img[i].size[1] for i in range(IMG_VARIABILITY_CE)]
+        img_size_win = [(int(0.6 * window_height * alpha_win[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_CE)]
+        for i in range(IMG_VARIABILITY_CE):
+            win_img[i] = win_img[i].resize(img_size_win[i])
 
-        lose_img = Image.open(f"./img/captured_{npice}.jpg")
-        alpha_lose = lose_img.size[0] / lose_img.size[1]
-        img_size_lose = (
-            int(0.6 * window_height * alpha_lose),
-            int(0.6 * window_height),
-        )
-        lose_img = lose_img.resize(img_size_lose)
+        lose_img = [Image.open(f"./img/captured_{npice}.jpg") for i in range(IMG_VARIABILITY_CE)]
+        alpha_lose = [lose_img[i].size[0] / lose_img[i].size[1] for i in range(IMG_VARIABILITY_CE)]
+        img_size_lose = [(int(0.6 * window_height * alpha_lose[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_CE)]
+        for i in range(IMG_VARIABILITY_CE):
+            lose_img[i] = lose_img[i].resize(img_size_lose[i])
 
-        self.marco_img_data = ImageTk.PhotoImage(marco_img)
-        self.win_img_data = ImageTk.PhotoImage(win_img)
-        self.lose_img_data = ImageTk.PhotoImage(lose_img)
+        self.marco_img_data = [ImageTk.PhotoImage(marco_img[i]) for i in range(IMG_VARIABILITY_MM)]
+        self.win_img_data = [ImageTk.PhotoImage(win_img[i]) for i in range(IMG_VARIABILITY_CE)]
+        self.lose_img_data = [ImageTk.PhotoImage(lose_img[i]) for i in range(IMG_VARIABILITY_CE)]
         self.mappa_img_data = ImageTk.PhotoImage(mappa_img)
         self.pos_r = int(img_size_mappa[1] / 37)
+        self.pictures = []
 
         start_txt = "Il pinguino Marco deve scappare dai guardiani dell'acquario di Trieste\nper ottenere pesce dai passanti. Può spostarsi nella città con la bicicletta,\nl'autobus, o il traghetto. Scegli le tue mosse per non farti acchiappare!"
         self.initial_layout = tk.Frame(
@@ -115,9 +110,10 @@ class GameGUI:
         tk.Label(
             self.initial_layout, text=start_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, columnspan=2, pady=(0, 7))
-        tk.Label(self.initial_layout, image=self.marco_img_data).grid(  # type: ignore
+        self.pictures.append(tk.Label(self.initial_layout, image=self.marco_img_data[random.randint(0, IMG_VARIABILITY_MM)])
+        self.pictures[0].grid(  # type: ignore
             row=1, column=0, columnspan=2, pady=7
-        )
+        ))
         tk.Button(
             self.initial_layout,
             text="Gioca!",
@@ -276,7 +272,8 @@ class GameGUI:
         tk.Label(
             self.win_layout, text=win_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, sticky="w", pady=(0, 7))
-        tk.Label(self.win_layout, image=self.win_img_data).grid(  # type: ignore
+        self.pictures.append(tk.Label(self.win_layout, image=self.win_img_data[random.randint(0, IMG_VARIABILITY_CE)]))
+        self.pictures[1].grid(  # type: ignore
             row=1, column=0, sticky="w", pady=7
         )
         tk.Button(
@@ -304,7 +301,8 @@ class GameGUI:
         )
         for i in range(4):
             self.path_labels[i].grid(row=i + 1, column=0, sticky="w")
-        tk.Label(self.lose_layout, image=self.lose_img_data).grid(  # type: ignore
+        self.pictures.append(tk.Label(self.lose_layout, image=self.lose_img_data[random.randint(0, IMG_VARIABILITY_CE)]))
+        self.pictures[2].grid(  # type: ignore
             row=5, column=0, sticky="w", pady=7
         )
         tk.Button(
@@ -582,6 +580,11 @@ class GameGUI:
             self.win_layout.pack_forget()
         else:
             self.lose_layout.pack_forget()
+        self.pictures[0].configure(image=self.marco_img_data[random.randint(0, IMG_VARIABILITY_MM)])
+        self.pictures[1].configure(image=self.win_img_data[random.randint(0, IMG_VARIABILITY_CE)])
+        self.pictures[2].configure(image=self.lose_img_data[random.randint(0, IMG_VARIABILITY_CE)])
+        for i in range(3):
+            self.pictures[i].update()
         self.initial_layout.pack()
 
     def mainloop(self):
