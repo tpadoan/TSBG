@@ -110,10 +110,10 @@ class GameGUI:
         tk.Label(
             self.initial_layout, text=start_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, columnspan=2, pady=(0, 7))
-        self.pictures.append(tk.Label(self.initial_layout, image=self.marco_img_data[random.randint(0, IMG_VARIABILITY_MM)])
+        self.pictures.append(tk.Label(self.initial_layout, image=self.marco_img_data[random.randint(0, IMG_VARIABILITY_MM)]))
         self.pictures[0].grid(  # type: ignore
             row=1, column=0, columnspan=2, pady=7
-        ))
+        )
         tk.Button(
             self.initial_layout,
             text="Gioca!",
