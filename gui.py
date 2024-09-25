@@ -84,7 +84,7 @@ class GameGUI:
         )
         mappa_img = mappa_img.resize(img_size_mappa)
 
-        win_img = [Image.open(f"./img/escaped_{i}.jpg") for i in range(IMG_VARIABILITY_CE)]
+        win_img = [Image.open(f"./img/escaped_{i}.png") for i in range(IMG_VARIABILITY_CE)]
         alpha_win = [win_img[i].size[0] / win_img[i].size[1] for i in range(IMG_VARIABILITY_CE)]
         img_size_win = [(int(0.6 * window_height * alpha_win[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_CE)]
         for i in range(IMG_VARIABILITY_CE):
@@ -111,9 +111,7 @@ class GameGUI:
             self.initial_layout, text=start_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, columnspan=2, pady=(0, 7))
         self.pictures.append(tk.Label(self.initial_layout, image=self.marco_img_data[random.randrange(0, IMG_VARIABILITY_MM)]))
-        self.pictures[0].grid(  # type: ignore
-            row=1, column=0, columnspan=2, pady=7
-        )
+        self.pictures[0].grid(row=1, column=0, columnspan=2, pady=7)
         tk.Button(
             self.initial_layout,
             text="Gioca!",
@@ -191,6 +189,39 @@ class GameGUI:
         )
         for i in range(4):
             self.pre_game_labels[i].grid(row=i + 1, column=0, sticky="w")
+        self.fake_buttons_frame = tk.Frame(self.pre_game_layout)
+        self.tickets_fake_buttons = (
+            tk.Button(
+                self.fake_buttons_frame,
+                text="",
+                font=self.main_font,
+                width=12,
+                height=3,
+                background="deep sky blue",
+                state="disabled",
+            ),
+            tk.Button(
+                self.fake_buttons_frame,
+                text="",
+                font=self.main_font,
+                width=12,
+                height=3,
+                background="red",
+                state="disabled",
+            ),
+            tk.Button(
+                self.fake_buttons_frame,
+                text="",
+                font=self.main_font,
+                width=12,
+                height=3,
+                background="green3",
+                state="disabled",
+            ),
+        )
+        for i in range(3):
+            self.tickets_fake_buttons[i].pack(side="left", padx=(0, 20))
+        self.fake_buttons_frame.grid(row=5, column=0, sticky="w", pady=7)
 
         self.game_layout = tk.Frame(
             self.window, width=window_width, height=window_height
@@ -210,7 +241,6 @@ class GameGUI:
                 self.map_canvas, self.pos_r + 1, self.pos_r + 1, self.pos_r, "yellow"
             ),
         )
-
         self.map_canvas.grid(row=0, column=0, columnspan=5, pady=(0, 7))
         self.game_labels = (
             tk.Label(
@@ -272,10 +302,8 @@ class GameGUI:
         tk.Label(
             self.win_layout, text=win_txt, font=self.main_font, justify="left"
         ).grid(row=0, column=0, sticky="w", pady=(0, 7))
-        self.pictures.append(tk.Label(self.win_layout, image=self.win_img_data[random.randrange(0, IMG_VARIABILITY_CE)]))
-        self.pictures[1].grid(  # type: ignore
-            row=1, column=0, sticky="w", pady=7
-        )
+        self.pictures.append(tk.Label(self.win_layout, image=self.win_img_data[0]))
+        self.pictures[1].grid(row=1, column=0, pady=7)
         tk.Button(
             self.win_layout,
             text="Ricomincia",
@@ -302,9 +330,7 @@ class GameGUI:
         for i in range(4):
             self.path_labels[i].grid(row=i + 1, column=0, sticky="w")
         self.pictures.append(tk.Label(self.lose_layout, image=self.lose_img_data[random.randrange(0, IMG_VARIABILITY_CE)]))
-        self.pictures[2].grid(  # type: ignore
-            row=5, column=0, sticky="w", pady=7
-        )
+        self.pictures[2].grid(row=5, column=0, pady=7)
         tk.Button(
             self.lose_layout,
             text="Ricomincia",
@@ -322,7 +348,7 @@ class GameGUI:
         )
 
     def nearest_loc(self, x, y):
-        dist = 1200  # initially: max acceptable distance
+        dist = 1200  # initially: max acceptable squared distance
         loc = None
         for i in range(len(self.loc_list)):
             new_dist = ((self.loc_list[i][0] - x) / self.w_factor) ** 2 + (
@@ -340,6 +366,13 @@ class GameGUI:
 
     def click_move(self, move):
         if self.counter == 10:
+            if move == "bike":
+                self.pictures[1].configure(image=self.win_img_data[0])
+            elif move == "bus":
+                self.pictures[1].configure(image=self.win_img_data[1])
+            elif move == "boat":
+                self.pictures[1].configure(image=self.win_img_data[2])
+            self.pictures[1].update()
             self.switch_to_endgame(True)
         else:
             if self.mode_select.current() > 0:
@@ -367,7 +400,34 @@ class GameGUI:
     def switch_to_pre_game_layout(self):
         detective_loc = random.sample(range(1, 22), 3)
         self.set_detective_starting_loc(detective_loc)
-        # self.update_infoSet([])
+        if self.mode_select.current() == 0:
+            self.tickets = None
+            self.tickets_fake_buttons[0].configure(text="Bicicletta")
+            self.tickets_fake_buttons[1].configure(text="Autobus")
+            self.tickets_fake_buttons[2].configure(text="Traghetto")
+            self.game_buttons[0].configure(text="Bicicletta", state="normal")
+            self.game_buttons[1].configure(text="Autobus", state="normal")
+            self.game_buttons[2].configure(text="Traghetto", state="normal")
+        else:
+            if self.mode_select.current() == 1:
+                self.tickets = [8, 5, 3]
+            else:
+                self.tickets = [6, 3, 1]
+            self.tickets_fake_buttons[0].configure(text=f"Bicicletta\n({self.tickets[0]})")
+            self.tickets_fake_buttons[1].configure(text=f"Autobus\n({self.tickets[1]})")
+            self.tickets_fake_buttons[2].configure(text=f"Traghetto\n({self.tickets[2]})")
+            self.game_buttons[0].configure(
+                text=f"Bicicletta\n({self.tickets[0]})", state="normal"
+            )
+            self.game_buttons[1].configure(
+                text=f"Autobus\n({self.tickets[1]})", state="normal"
+            )
+            self.game_buttons[2].configure(
+                text=f"Traghetto\n({self.tickets[2]})", state="normal"
+            )
+        for i in range(3):
+            self.tickets_fake_buttons[i].update()
+            self.game_buttons[i].update()
         self.initial_layout.pack_forget()
         self.pre_game_layout.pack()
 
@@ -386,27 +446,6 @@ class GameGUI:
         self.path_labels[3].configure(
             text="Percorso di Marco:  " + str(marco_starting_pos)
         )
-        if self.mode_select.current() == 0:
-            self.tickets = None
-            self.game_buttons[0].configure(text="Bicicletta", state="normal")
-            self.game_buttons[1].configure(text="Autobus", state="normal")
-            self.game_buttons[2].configure(text="Traghetto", state="normal")
-        else:
-            if self.mode_select.current() == 1:
-                self.tickets = [8, 5, 3]
-            else:
-                self.tickets = [6, 3, 1]
-            self.game_buttons[0].configure(
-                text=f"Bicicletta\n({self.tickets[0]})", state="normal"
-            )
-            self.game_buttons[1].configure(
-                text=f"Autobus\n({self.tickets[1]})", state="normal"
-            )
-            self.game_buttons[2].configure(
-                text=f"Traghetto\n({self.tickets[2]})", state="normal"
-            )
-        for i in range(3):
-            self.game_buttons[i].update()
         self.game_labels[0].update()
         self.game_labels[4].update()
         self.path_labels[3].update()
@@ -581,10 +620,9 @@ class GameGUI:
         else:
             self.lose_layout.pack_forget()
         self.pictures[0].configure(image=self.marco_img_data[random.randrange(0, IMG_VARIABILITY_MM)])
-        self.pictures[1].configure(image=self.win_img_data[random.randrange(0, IMG_VARIABILITY_CE)])
         self.pictures[2].configure(image=self.lose_img_data[random.randrange(0, IMG_VARIABILITY_CE)])
-        for i in range(3):
-            self.pictures[i].update()
+        self.pictures[0].update()
+        self.pictures[2].update()
         self.initial_layout.pack()
 
     def mainloop(self):
@@ -592,7 +630,6 @@ class GameGUI:
 
     def quit(self):
         self.window.destroy()
-
 
 if __name__ == "__main__":
     game_gui = GameGUI()
