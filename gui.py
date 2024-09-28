@@ -241,6 +241,9 @@ class GameGUI:
                 self.map_canvas, self.pos_r + 1, self.pos_r + 1, self.pos_r, "yellow"
             ),
         )
+        self.infoSet = []
+        for i in range(21):
+            self.infoSet.append(self.create_circle(self.map_canvas, self.loc_list[i][0]-2, self.loc_list[i][1]-2, self.pos_r, 'magenta'))
         self.map_canvas.grid(row=0, column=0, columnspan=5, pady=(0, 7))
         self.game_labels = (
             tk.Label(
@@ -292,8 +295,17 @@ class GameGUI:
             ),
         )
         for i in range(4):
-            self.game_buttons[i].grid(row=5, column=i, sticky="w", pady=7, padx=(0, 12))
+            self.game_buttons[i].grid(row=5, column=i, rowspan=2, sticky="w", pady=7, padx=(0, 12))
         self.game_labels[0].grid(row=5, column=4, sticky="w")
+        self.show_infoSet = tk.IntVar()
+        self.show_infoSet.set(0)
+        tk.Checkbutton(
+            self.game_layout,
+            text="Possibili posizioni di Marco",
+            font=self.main_font,
+            variable=self.show_infoSet,
+            command=self.update_infoSet,
+        ).grid(row=6, column=4, sticky="e")
 
         win_txt = "Congratulazioni, sei riuscito a fuggire! Ti sei meritato un sacco di pesce!"
         self.win_layout = tk.Frame(
@@ -396,10 +408,25 @@ class GameGUI:
                 self.game_buttons[2].configure(text="Traghetto", state="disabled")
                 for i in range(3):
                     self.game_buttons[i].update()
+            self.update_infoSet()
+
+    def update_infoSet(self):
+        if self.show_infoSet.get():
+            infoS = self.game.getMrXPos()
+            for i in range(21):
+                if i+1 in infoS:
+                    self.map_canvas.itemconfigure(self.infoSet[i], state='normal')
+                else:
+                    self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
+        else:
+            for i in range(21):
+                self.map_canvas.itemconfigure(self.infoSet[i], state='hidden')
 
     def switch_to_pre_game_layout(self):
         detective_loc = random.sample(range(1, 22), 3)
         self.set_detective_starting_loc(detective_loc)
+        self.show_infoSet.set(0)
+        self.update_infoSet()
         if self.mode_select.current() == 0:
             self.tickets = None
             self.tickets_fake_buttons[0].configure(text="Bicicletta")
