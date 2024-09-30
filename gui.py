@@ -14,7 +14,8 @@ from logic import Game
 warnings.filterwarnings("ignore")
 
 IMG_VARIABILITY_MM: int = 2
-IMG_VARIABILITY_CE: int = 3
+IMG_VARIABILITY_CAP: int = 2
+IMG_VARIABILITY_ESC: int = 3
 
 
 # noinspection PyAttributeOutsideInit
@@ -84,21 +85,21 @@ class GameGUI:
         )
         mappa_img = mappa_img.resize(img_size_mappa)
 
-        win_img = [Image.open(f"./img/escaped_{i}.png") for i in range(IMG_VARIABILITY_CE)]
-        alpha_win = [win_img[i].size[0] / win_img[i].size[1] for i in range(IMG_VARIABILITY_CE)]
-        img_size_win = [(int(0.6 * window_height * alpha_win[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_CE)]
-        for i in range(IMG_VARIABILITY_CE):
+        win_img = [Image.open(f"./img/escaped_{i}.png") for i in range(IMG_VARIABILITY_ESC)]
+        alpha_win = [win_img[i].size[0] / win_img[i].size[1] for i in range(IMG_VARIABILITY_ESC)]
+        img_size_win = [(int(0.6 * window_height * alpha_win[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_ESC)]
+        for i in range(IMG_VARIABILITY_ESC):
             win_img[i] = win_img[i].resize(img_size_win[i])
 
-        lose_img = [Image.open(f"./img/captured_{i}.jpg") for i in range(IMG_VARIABILITY_CE)]
-        alpha_lose = [lose_img[i].size[0] / lose_img[i].size[1] for i in range(IMG_VARIABILITY_CE)]
-        img_size_lose = [(int(0.6 * window_height * alpha_lose[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_CE)]
-        for i in range(IMG_VARIABILITY_CE):
+        lose_img = [Image.open(f"./img/captured_{i}.jpg") for i in range(IMG_VARIABILITY_CAP)]
+        alpha_lose = [lose_img[i].size[0] / lose_img[i].size[1] for i in range(IMG_VARIABILITY_CAP)]
+        img_size_lose = [(int(0.6 * window_height * alpha_lose[i]), int(0.6 * window_height)) for i in range(IMG_VARIABILITY_CAP)]
+        for i in range(IMG_VARIABILITY_CAP):
             lose_img[i] = lose_img[i].resize(img_size_lose[i])
 
         self.marco_img_data = [ImageTk.PhotoImage(marco_img[i]) for i in range(IMG_VARIABILITY_MM)]
-        self.win_img_data = [ImageTk.PhotoImage(win_img[i]) for i in range(IMG_VARIABILITY_CE)]
-        self.lose_img_data = [ImageTk.PhotoImage(lose_img[i]) for i in range(IMG_VARIABILITY_CE)]
+        self.win_img_data = [ImageTk.PhotoImage(win_img[i]) for i in range(IMG_VARIABILITY_ESC)]
+        self.lose_img_data = [ImageTk.PhotoImage(lose_img[i]) for i in range(IMG_VARIABILITY_CAP)]
         self.mappa_img_data = ImageTk.PhotoImage(mappa_img)
         self.pos_r = int(img_size_mappa[1] / 37)
         self.pictures = []
@@ -341,7 +342,7 @@ class GameGUI:
         )
         for i in range(4):
             self.path_labels[i].grid(row=i + 1, column=0, sticky="w")
-        self.pictures.append(tk.Label(self.lose_layout, image=self.lose_img_data[random.randrange(0, IMG_VARIABILITY_CE)]))
+        self.pictures.append(tk.Label(self.lose_layout, image=self.lose_img_data[random.randrange(0, IMG_VARIABILITY_CAP)]))
         self.pictures[2].grid(row=5, column=0, pady=7)
         tk.Button(
             self.lose_layout,
@@ -647,7 +648,7 @@ class GameGUI:
         else:
             self.lose_layout.pack_forget()
         self.pictures[0].configure(image=self.marco_img_data[random.randrange(0, IMG_VARIABILITY_MM)])
-        self.pictures[2].configure(image=self.lose_img_data[random.randrange(0, IMG_VARIABILITY_CE)])
+        self.pictures[2].configure(image=self.lose_img_data[random.randrange(0, IMG_VARIABILITY_CAP)])
         self.pictures[0].update()
         self.pictures[2].update()
         self.initial_layout.pack()
