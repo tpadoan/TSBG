@@ -6,7 +6,6 @@ import warnings
 from tkinter import ttk
 from tkinter.font import Font
 
-import numpy as np
 from PIL import Image
 from PIL import ImageTk
 
