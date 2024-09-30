@@ -1,6 +1,6 @@
 # La fuga di Marco
 
-Originally presented at the sharper night 2023 at Immaginario Scientifico, Trieste (Italy), the project is a digital tabletop game, spiritually similar to Scotland Yard.
+Presented at the Sharper Night 2023 at Immaginario Scientifico and Trieste Next 2024 in Piazza Unità d'Italia, Trieste (Italy), the project is a digital tabletop game, spiritually similar to Scotland Yard.
 The player, moving through a graph, has to avoid getting caught by the opponents, controlled by AI (either a pure-probabilistic method -- see below -- or based on reinforcement learning).
 The AI only knows the player's initial position and the transports taken to move. 
 
